@@ -2,9 +2,7 @@
 /**
  * rma.php
  *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
+
  * @created    2022-08-22 19:27:35
  * @modified   2022-08-22 19:27:35
  */
@@ -15,7 +13,7 @@ return [
     'customer_id'      => 'Khách hàng',
     'quantity'         => 'Số lượng',
     'opened'           => 'Đã mở',
-    'rma_reason_id'    => 'Lý do RMA',
+    'rma_reason_id'    => 'Lý do hủy',
     'type'             => 'Loại',
 
     'status_pending'   => 'Đang chờ',

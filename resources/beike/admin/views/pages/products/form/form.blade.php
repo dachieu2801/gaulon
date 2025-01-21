@@ -34,12 +34,12 @@
     <li class="nav-item" role="presentation">
       <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-descriptions" type="button">{{ __('admin/product.product_details') }}</button>
     </li>
-    <li class="nav-item" role="presentation">
+    <!-- <li class="nav-item" role="presentation">
       <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-attribute" type="button">{{ __('admin/attribute.index') }}</button>
-    </li>
-    <li class="nav-item" role="presentation">
+    </li> -->
+    <!-- <li class="nav-item" role="presentation">
       <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-seo" type="button" >SEO</button>
-    </li>
+    </li> -->
     <li class="nav-item" role="presentation">
       <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-relations" type="button">{{ __('admin/product.product_relations') }}</button>
     </li>
@@ -81,7 +81,7 @@
               <div class="help-text mb-1 mt-1">{{ __('admin/product.image_help') }}</div>
             </x-admin::form.row>
 
-            <x-admin::form.row title="{{ __('product.video') }}">
+            <!-- <x-admin::form.row title="{{ __('product.video') }}">
               <div class="wp-400 border">
                 <div class="nav nav-tabs video-nav-tabs" role="tablist">
                   <button :class="['nav-link rounded-0', form.video.videoType == 'local' ? 'active' : '']" @click="videoTypeChange('local')" data-bs-toggle="tab" data-bs-target="#nav-v-local" type="button">{{ __('admin/product.video_local') }}</button>
@@ -93,6 +93,7 @@
                   <div :class="['tab-pane fade ', form.video.videoType == 'local' ? 'show active' : '']" id="nav-v-local">
                     <div class="d-flex align-items-end">
                       <div class="set-product-img wh-80 rounded-2 me-2" @click="addProductVideo">
+                        
                         <i v-if="form.video.url" class="bi bi-play-circle fs-1"></i>
                         <i v-else class="bi bi-plus fs-1 text-muted"></i>
                       </div>
@@ -113,11 +114,11 @@
 
                 <input type="hidden" name="video" :value="form.video.path">
               </div>
-            </x-admin::form.row>
+            </x-admin::form.row> -->
 
             <x-admin-form-input name="position" :title="__('common.sort_order')" :value="old('position', $product->position ?? '0')" />
 
-            <x-admin::form.row :title="__('admin/product.weight_text')">
+            <!-- <x-admin::form.row :title="__('admin/product.weight_text')">
               <div class="d-flex wp-400">
                 <input type="text" name="weight" placeholder="{{ __('admin/product.weight_text') }}" value="{{ old('weight', $product->weight ?? '') }}" class="form-control" style="flex: 0 0 260px" />
                 <select class="form-select ms-4 bg-white" name="weight_class">
@@ -126,17 +127,18 @@
                   @endforeach
                 </select>
               </div>
-            </x-admin::form.row>
+            </x-admin::form.row> -->
 
             @hookwrapper('admin.product.edit.brand')
-            <x-admin::form.row :title="__('admin/brand.index')">
+            <!-- <x-admin::form.row :title="__('admin/brand.index')">
               <input type="text" name="brand_name" value="{{ old('brand_name', $product->brand->name ?? '') }}" placeholder="{{ __('admin/builder.modules_keywords_search') }}" id="brand-autocomplete" class="form-control wp-400 " />
               <input type="hidden" name="brand_id" value="{{ old('brand_id', $product->brand_id ?? '') }}" />
-            </x-admin::form.row>
+            </x-admin::form.row> -->
             @endhookwrapper
-
+         
+          @if($showTax)
             <x-admin-form-select :title="__('admin/tax_class.index')" name="tax_class_id" :value="old('tax_class_id', $product->tax_class_id ?? '')" :options="$tax_classes" key="id" label="title" />
-
+          @endif  
             <x-admin-form-select name="shipping" :title="__('admin/common.shipping')" :value="old('shipping', $product->shipping ?? 1)" :options="[['title' => __('common.yes'), 'id' => 1], ['title' => __('common.no'),'id' => 0]]" key="id" label="title" />
 
             @hookwrapper('admin.product.edit.category')
@@ -245,7 +247,7 @@
                           <i class="bi bi-plus fs-3 text-muted" v-else></i>
                         </div>
                         <input type="text" class="form-control me-2 bg-white" v-model="variablesBatch.model" placeholder="{{ __('admin/product.model') }}">
-                        <input type="text" class="form-control me-2 bg-white" v-model="variablesBatch.sku" placeholder="sku">
+                        <!-- <input type="text" class="form-control me-2 bg-white" v-model="variablesBatch.sku" placeholder="sku"> -->
                         <input type="number" class="form-control me-2 bg-white" v-model="variablesBatch.cost_price" placeholder="{{ 'Giá trước thuế' }}">
                         <!-- <input type="number" class="form-control me-2 bg-white" v-model="variablesBatch.price" placeholder="{{ 'Giá sau thuế' }}"> -->
                         <input type="number" class="form-control me-2 bg-white" v-model="variablesBatch.origin_price" placeholder="{{ __('admin/product.origin_price') }}">
@@ -262,7 +264,7 @@
                           </th>
                           <th width="106px">{{ __('common.image') }}</th>
                           <th class="w-min-100">{{ __('admin/product.model') }}</th>
-                          <th class="w-min-100">sku</th>
+                          <!-- <th class="w-min-100">sku</th> -->
                           <th class="w-min-100">{{ 'Giá trước thuế' }}</th>
                           <th class="w-min-100">{{ __('admin/product.origin_price') }}</th>
                           <!-- <th class="w-min-100">{{ 'Giá sau thuế' }}</th> -->
@@ -294,11 +296,11 @@
                             </td>
                             <td><input type="text" class="form-control" v-model="sku.model" :name="'skus[' + skuIndex + '][model]'"
                                 placeholder="{{ __('admin/product.model') }}"></td>
-                            <td>
+                            <!-- <td>
                               <input type="text" class="form-control" v-model="sku.sku" :name="'skus[' + skuIndex + '][sku]'" placeholder="sku" :style="sku.is_default ? 'margin-top: 19px;' : ''" required>
                               <span role="alert" class="invalid-feedback">{{ __('common.error_required', ['name' => 'sku']) }}</span>
                               <span v-if="sku.is_default * 1" class="text-success">{{ __('admin/product.default_main_product') }}</span>
-                            </td>
+                            </td> -->
                             <td><input type="number" class="form-control" v-model="sku.cost_price" :name="'skus[' + skuIndex + '][cost_price]'" step="any"
                                 placeholder="{{ 'Giá trước thuế' }}">
                             </td>
@@ -331,7 +333,7 @@
               <div v-if="!editing.isVariable">
                 <input type="hidden" value="{{ old('skus.0.image', $product->skus[0]->image ?? '') }}" name="skus[0][image]">
                 <x-admin-form-input name="skus[0][model]" :title="__('admin/product.model')" :value="old('skus.0.model', $product->skus[0]->model ?? '')" />
-                <x-admin-form-input name="skus[0][sku]" title="sku" :value="old('skus.0.sku', $product->skus[0]->sku ?? '')" required />
+                <!-- <x-admin-form-input name="skus[0][sku]" title="sku" :value="old('skus.0.sku', $product->skus[0]->sku ?? '')" required /> -->
                 <x-admin-form-input name="skus[0][cost_price]" type="number" :title="'Giá trước thuế'" :value="old('skus.0.cost_price', $product->skus[0]->cost_price ?? '')" step="any" required />
                 <!-- <x-admin-form-input name="skus[0][price]" type="number" :title="'Giá sau thuế'" :value="old('skus.0.price', $product->skus[0]->price ?? '')" step="any" required /> -->
                 <x-admin-form-input name="skus[0][origin_price]" type="number" :title="__('admin/product.origin_price')" :value="old('skus.0.origin_price', $product->skus[0]->origin_price ?? '')" step="any" />
@@ -464,7 +466,7 @@
                     placeholder="{{ __('admin/builder.modules_keywords_search') }}"
                     @select="relationsHandleSelect"
                   ></el-autocomplete>
-
+                   
                   <div class="item-group-wrapper" v-loading="relations.loading">
                     <template v-if="relations.products.length">
                       <draggable

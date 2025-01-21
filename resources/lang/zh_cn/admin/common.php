@@ -2,9 +2,7 @@
 /**
  * common.php
  *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
+
  * @created    2022-08-02 19:03:19
  * @modified   2022-08-02 19:03:19
  */
@@ -18,6 +16,7 @@ return [
     'install'                          => 'Cài đặt',
     'uninstall'                        => 'Gỡ cài đặt',
     'vouchers_index'                   => 'Mã giảm giá',
+    'products_bestSelling'            => 'Sản phẩm bán chạy',
     // errors
     'forbidden'                        => 'Từ chối',
     'has_no_permission'                => 'Bạn không có quyền truy cập, vui lòng liên hệ với quản trị viên.',
@@ -91,8 +90,8 @@ return [
     'brands_index'                     => 'Thương hiệu',
     'orders_index'                     => 'Đơn hàng',
     'orders_trashed'                   => 'Đơn hàng đã xóa',
-    'rmas_index'                       => 'RMA',
-    'rma_reasons_index'                => 'Lý do RMA',
+    'rmas_index'                       => 'Đơn hủy',
+    'rma_reasons_index'                => 'Lý do hủy',
     'customers_index'                  => 'Khách hàng',
     'customer_groups_index'            => 'Nhóm khách hàng',
     'countries_index'                  => 'Tỉnh/Thành phố',
@@ -111,7 +110,7 @@ return [
     'not_enabled'                      => 'Không được kích hoạt',
     'buy_copyright'                    => 'Mua bản quyền',
     'translate_form'                   => 'Vui lòng nhập nội dung cần dịch',
-    'copyright_hint_text'              => 'Vui lòng bảo lưu bản quyền hoặc truy cập <a href="https://beikeshop.com/vip/subscription?type=tab-license" target="_blank">Mua</a>',
+    'copyright_hint_text'              => 'Vui lòng bảo lưu bản quyền hoặc truy cập <a href="copyright_hint_text/vip/subscription?type=tab-license" target="_blank">Mua</a>',
     'reviews'                          => 'Đánh giá sản phẩm',
     'login_at'=> 'Lần cuối đăng nhập'
 ];

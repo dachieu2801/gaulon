@@ -2,9 +2,7 @@
 /**
  * CurrencyService.php
  *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     TL <mengwb@guangda.work>
+
  * @created    2022-07-28 16:29:54
  * @modified   2022-07-28 16:29:54
  */
@@ -74,7 +72,7 @@ class CurrencyService
             $string .= $symbol_left;
         }
 
-        $string .= number_format(abs($amount), (int) $decimal_place, __('currency.decimal_point'), __('currency.thousand_point'));
+        $string .= number_format(abs($amount), (int) $decimal_place, __('currency.decimal_point'),);
 
         if ($symbol_right) {
             $string .= ' ' . $symbol_right;

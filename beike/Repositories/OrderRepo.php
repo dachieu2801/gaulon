@@ -1,13 +1,5 @@
 <?php
-/**
- * OrderRepo.php
- *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
- * @created    2022-07-04 17:22:02
- * @modified   2022-07-04 17:22:02
- */
+
 
 namespace Beike\Repositories;
 
@@ -205,20 +197,16 @@ class OrderRepo
         return $builder->first();
     }
 
-    /**
-     * @param array $data
-     * @return Order
-     * @throws \Throwable
-     */
     public static function create(array $data): Order
     {
-        $customer    = $data['customer']      ?? null;
-        $current     = $data['current']       ?? [];
-        $carts       = $data['carts']         ?? [];
-        $totals      = $data['totals']        ?? [];
-        $receiveTime = $data['receive_time']  ?? '';
-        $comment     = $data['comment']       ?? '';
-        $orderTotal  = collect($totals)->where('code', 'order_total')->first();
+        $customer                  = $data['customer']                       ?? null;
+        $current                   = $data['current']                        ?? [];
+        $carts                     = $data['carts']                          ?? [];
+        $totals                    = $data['totals']                         ?? [];
+        $receiveTime               = $data['receive_time']                   ?? '';
+        $comment                   = $data['comment']                        ?? '';
+
+        $orderTotal          = collect($totals)->where('code', 'order_total')->first();
 
         if ($customer) {
             $shippingAddressId = $current['shipping_address_id'] ?? 0;
@@ -250,14 +238,14 @@ class OrderRepo
         $order = new Order([
             'voucher_id'                  => $current['voucher_id'] ?? 0,
             'number'                      => self::generateOrderNumber(),
-            'customer_id'                 => $customer->id                ?? 0,
-            'customer_group_id'           => $customer->customer_group_id ?? 0,
-            'shipping_address_id'         => $shippingAddress->id         ?? 0,
-            'payment_address_id'          => $paymentAddress->id          ?? 0,
-            'customer_name'               => $customer->name              ?? '',
+            'customer_id'                 => $customer->id                                                ?? 0,
+            'customer_group_id'           => $customer->customer_group_id                                 ?? 0,
+            'shipping_address_id'         => $shippingAddress->id                                         ?? 0,
+            'payment_address_id'          => $paymentAddress->id                                          ?? 0,
+            'customer_name'               => $current['receiving_method'] == 'shipping' ? $customer->name ?? '' : $current['name'],
             'email'                       => $email,
-            'calling_code'                => $customer->calling_code ?? 0,
-            'telephone'                   => $customer->telephone    ?? '',
+            'calling_code'                => $customer->calling_code                                              ?? 0,
+            'telephone'                   => $current['receiving_method'] == 'shipping' ? $customer->telephone    ?? '' : $current['phone'],
             'total'                       => $orderTotal['amount'],
             'locale'                      => locale(),
             'currency_code'               => $currencyCode,
@@ -281,18 +269,23 @@ class OrderRepo
             'shipping_address_2'          => $shippingAddress->address_2    ?? '',
             'shipping_zipcode'            => $shippingAddress->zipcode      ?? '',
             'payment_method_code'         => $paymentMethodCode,
-            'payment_method_name'         => $paymentMethodName,
-            'payment_customer_name'       => $paymentAddress->name,
+            'payment_method_name'         => $paymentMethodName            ?? '',
+            'payment_customer_name'       => $paymentAddress->name         ?? '',
             'payment_calling_code'        => $paymentAddress->calling_code ?? 0,
             'payment_telephone'           => $paymentAddress->phone        ?? '',
             'payment_country'             => $paymentAddress->country_name ?? '',
             'payment_country_id'          => $paymentAddress->country_id   ?? 0,
-            'payment_zone'                => $paymentAddress->zone,
-            'payment_zone_id'             => $paymentAddress->zone_id ?? 0,
-            'payment_city'                => $paymentAddress->city,
-            'payment_address_1'           => $paymentAddress->address_1,
-            'payment_address_2'           => $paymentAddress->address_2,
-            'payment_zipcode'             => $paymentAddress->zipcode,
+            'payment_zone'                => $paymentAddress->zone         ?? 0,
+            'payment_zone_id'             => $paymentAddress->zone_id      ?? 0,
+            'payment_city'                => $paymentAddress->city         ?? 0,
+            'payment_address_1'           => $paymentAddress->address_1    ?? 0,
+            'payment_address_2'           => $paymentAddress->address_2    ?? 0,
+            'payment_zipcode'             => $paymentAddress->zipcode      ?? 0,
+            'receiving_method'            => $current['receiving_method']  ?? 'shipping',
+            'pick_up_address'             => $current['pick_up_address']   ?? '',
+            'pick_up_time'                => $current['pick_up_time']      ?? '',
+            'name'                        => $current['name']              ?? '',
+            'phone'                       => $current['phone']             ?? '',
         ]);
         $order->saveOrFail();
 

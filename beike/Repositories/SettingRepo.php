@@ -1,13 +1,4 @@
 <?php
-/**
- * SettingRepo.php
- *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
- * @created    2022-06-30 16:36:40
- * @modified   2022-06-30 16:36:40
- */
 
 namespace Beike\Repositories;
 
@@ -18,9 +9,6 @@ use Illuminate\Support\Facades\Artisan;
 
 class SettingRepo
 {
-    /**
-     * 按照类型分组获取设置
-     */
     public static function getGroupedSettings(): array
     {
         $settings = Setting::all(['type', 'space', 'name', 'value', 'json']);
@@ -45,11 +33,6 @@ class SettingRepo
         return $result;
     }
 
-    /**
-     * 获取插件默认字段
-     *
-     * @return array
-     */
     public static function getPluginStatusColumn(): array
     {
         return [
@@ -60,11 +43,6 @@ class SettingRepo
         ];
     }
 
-    /**
-     * 获取单个插件所有字段
-     * @param $pluginCode
-     * @return mixed
-     */
     public static function getPluginColumns($pluginCode)
     {
         return Setting::query()
@@ -74,12 +52,23 @@ class SettingRepo
             ->keyBy('name');
     }
 
-    /**
-     * 获取单个插件状态
-     *
-     * @param $pluginCode
-     * @return bool
-     */
+    public static function getValuePluginColumns($pluginCode, $name)
+    {
+        $setting = Setting::query()
+            ->where('type', 'plugin')
+            ->where('space', $pluginCode)
+            ->where('name', $name)
+            ->first();
+
+        if ($setting) {
+            $setting = $setting->jsonSerialize();
+
+            return $setting['value'];
+        }
+
+        return null;
+    }
+
     public static function getPluginStatus($pluginCode): bool
     {
         $status = plugin_setting("{$pluginCode}.status");
@@ -87,13 +76,6 @@ class SettingRepo
         return (bool) $status;
     }
 
-    /**
-     * 批量更新设置
-     *
-     * @param $type
-     * @param $code
-     * @param $fields
-     */
     public static function update($type, $code, $fields)
     {
         $columns = array_keys($fields);
@@ -122,15 +104,6 @@ class SettingRepo
         self::clearCache();
     }
 
-    /**
-     * 创建或更新单条记录
-     *
-     * @param             $name
-     * @param             $value
-     * @param  string     $space
-     * @param  string     $type
-     * @throws \Throwable
-     */
     public static function storeValue($name, $value, string $space = 'base', string $type = 'system')
     {
         if (in_array($name, ['_method', '_token'])) {
@@ -159,6 +132,15 @@ class SettingRepo
         }
         self::clearCache();
     }
+    public static function getSystemValue($name)
+    {
+        return Setting::query()
+            ->where('type', 'system')
+            ->where('space', 'base')
+            ->where('name', $name)
+            ->first();
+
+    }
 
     public static function getMobileSetting()
     {
@@ -182,9 +164,6 @@ class SettingRepo
         ];
     }
 
-    /**
-     * Clear all cache.
-     */
     public static function clearCache()
     {
         Artisan::call('cache:clear');

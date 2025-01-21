@@ -50,18 +50,18 @@
           </el-form-item>
         </el-form>
 
-        <div class="row">
-          <label class="wp-100"></label>
-          <div class="col-auto">
-            <button type="button" @click="search"
-              class="btn btn-outline-primary btn-sm">{{ __('common.filter') }}</button>
-            <button type="button" @click="exportOrder"
-              class="btn btn-outline-primary btn-sm ms-1">{{ __('common.export') }}</button>
-            <button type="button" @click="resetSearch"
-              class="btn btn-outline-secondary btn-sm ms-1">{{ __('common.reset') }}</button>
-          </div>
+            <div class="row">
+                <label class="wp-100"></label>
+                <div class="col-auto">
+                    <button type="button" @click="search"
+                        class="btn btn-outline-primary btn-sm">{{ __('common.filter') }}</button>
+{{--                    <button type="button" @click="exportOrder"--}}
+{{--                        class="btn btn-outline-primary btn-sm ms-1">{{ __('common.export') }}</button>--}}
+                    <button type="button" @click="resetSearch"
+                        class="btn btn-outline-secondary btn-sm ms-1">{{ __('common.reset') }}</button>
+                </div>
+            </div>
         </div>
-      </div>
 
       @if (count($orders))
         <div class="table-push overflow-auto">
@@ -83,25 +83,34 @@
             </thead>
             <tbody>
               @if (count($orders))
-                @foreach ($orders as $order)
-                  <tr data-hook-id={{ $order->id }}>
-                    <td><input type="checkbox" :value="{{ $order['id'] }}" v-model="selectedIds" /></td>
-                    <td>{{ $order->id }}</td>
-                    <td>{{ $order->number }}</td>
-                    <td>{{ sub_string($order->customer_name, 14) }}</td>
-                    <td>{{ $order->payment_method_name }}</td>
-                    <td>{{ $order->status_format }}</td>
-                    <td>{{ currency_format($order->total, $order->currency_code, $order->currency_value) }}</td>
-                    <td>{{ $order->created_at }}</td>
-                    <td>{{ $order->updated_at }}</td>
-                    <td>{{ $order->receive_time }}</td>
-                    <td>
-                      @if (!$order->deleted_at)
-                     <div class="d-flex gap-2 ">
-                       <a href="{{ admin_route('orders.show', [$order->id]) }}"
-                          class="btn btn-secondary btn-sm">{{ __('common.view') }}
-                       </a>
+
+                    @foreach ($orders as $order)
+                    <tr data-hook-id={{ $order->id }}>
+                        <td><input type="checkbox" :value="{{ $order['id'] }}" v-model="selectedIds" /></td>
+                        <td>{{ $order->id }}</td>
+                        <td>{{ $order->number }}</td>
+                        <td>{{ sub_string($order->customer_name, 14) }}</td>
+                        <td>{{ $order->payment_method_name }}</td>
+                        <td>{{ $order->status_format }}</td>
+                        <td>{{ currency_format($order->total, $order->currency_code, $order->currency_value) }}</td>
+                        <td>{{ $order->created_at }}</td>
+                        <td>{{ $order->updated_at }}</td>
+                        <td>{{ $order->receive_time ? $order->receive_time : $order->pick_up_time }}</td>
+                        <td>
+                            @if (!$order->deleted_at)
+                            <div class="d-flex gap-2 ">
+                                <a href="{{ admin_route('orders.show', [$order->id]) }}"
+                                    class="btn btn-primary btn-sm">{{ __('common.view') }}
+                                </a>
+
+
+
                        <button type="button"  data-id="{{ $order->id }}" class="btn btn-outline-danger btn-sm delete-btn">{{ __('common.delete') }}</button>
+                       @if($order->status=="unpaid")
+                      <a href="{{ admin_route('orders.edit', [$order->id]) }}"
+                         class="btn btn-secondary btn-sm"> Sửa
+                      </a>
+                      @endif
                      </div>
                       @else
                       <button type="button" data-id="{{ $order->id }}" class="btn btn-outline-secondary btn-sm restore-btn">{{ __('common.restore') }}</button>

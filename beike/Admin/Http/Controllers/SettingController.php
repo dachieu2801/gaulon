@@ -1,13 +1,5 @@
 <?php
-/**
- * SettingController.php
- *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
- * @created    2022-06-29 16:02:15
- * @modified   2022-06-29 16:02:15
- */
+
 
 namespace Beike\Admin\Http\Controllers;
 
@@ -22,14 +14,10 @@ use Beike\Repositories\ThemeRepo;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use function Laravel\Prompts\error;
 
 class SettingController extends Controller
 {
-    /**
-     * 显示系统设置页面
-     *
-     * @return mixed
-     */
     public function index()
     {
         $themes = ThemeRepo::getAllThemes();
@@ -53,14 +41,19 @@ class SettingController extends Controller
         return view('admin::pages.setting', $data);
     }
 
-    /**
-     * 更新系统设置
-     *
-     * @throws \Throwable
-     */
     public function store(Request $request): mixed
     {
-        $settings = $request->all();
+        $settings                  = $request->all();
+        $address_status            = $settings['address_status'] ?? 0;
+        if (
+            ! $address_status                                          &&
+            ! $settings['store_address_status']                        &&
+            $settings['store_address_status']                   == 0   &&
+            $address_status                                     == 0
+        ) {
+            return redirect(admin_route('settings.index'))->withInput()->with('error', 'Bạn cần kích hoạt ít nhất một phương thức nhận hàng');
+        }
+
         if (isset($settings['show_price_after_login'])) {
             if ($settings['show_price_after_login']) {
                 $settings['guest_checkout'] = false;
@@ -80,11 +73,6 @@ class SettingController extends Controller
         return redirect($settingUrl)->with('success', trans('common.updated_success'));
     }
 
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     * @throws \Throwable
-     */
     public function updateValues(Request $request): JsonResponse
     {
         $settings = $request->all();
@@ -98,11 +86,6 @@ class SettingController extends Controller
         }
     }
 
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     * @throws \Throwable
-     */
     public function storeDeveloperToken(Request $request): JsonResponse
     {
         SettingRepo::storeValue('developer_token', $request->get('developer_token'));

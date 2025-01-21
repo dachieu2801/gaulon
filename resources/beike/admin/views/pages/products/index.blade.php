@@ -85,7 +85,8 @@
               <input type="file" id="import-excel" accept=".xlsx, .xls">
               <button class="btn btn-success text-white"  id="upload-excel">Upload Excel</button>
 
-      <button id="export-excel" class="btn btn-danger">{{ __('admin/product.export_excel') }}</button>
+              <button id="export-example-excel" class="btn btn-light">Tải file excel mẫu</button>
+              <button id="export-excel" class="btn btn-danger">{{ __('admin/product.export_excel') }}</button>
           </div>
           @else
             @if ($products->total())
@@ -110,11 +111,11 @@
               <thead>
                 <tr>
                   <th><input type="checkbox" v-model="allSelected" /></th>
-                  <th>{{ __('common.id') }}</th>
+                  <th class="d-none d-md-table-cell">{{ __('common.id') }}</th>
                   <th>{{ __('product.image') }}</th>
                   <th>{{ __('product.name') }}</th>
                   <th>{{ __('product.price') }}</th>
-                  <th>
+                  <th class="d-none d-md-table-cell">
                     <div class="d-flex align-items-center">
                         {{ __('common.created_at') }}
                       <div class="d-flex flex-column ml-1 order-by-wrap">
@@ -124,7 +125,7 @@
                     </div>
                   </th>
 
-                  <th class="d-flex align-items-center">
+                  <th class="d-none d-md-table-cell">
                     <div class="d-flex align-items-center">
                         TT ưu tiên
                       <div class="d-flex flex-column ml-1 order-by-wrap">
@@ -146,7 +147,7 @@
                 @foreach ($products_format as $product)
                 <tr>
                   <td><input type="checkbox" :value="{{ $product['id'] }}" v-model="selectedIds" /></td>
-                  <td>{{ $product['id'] }}</td>
+                  <td class="d-none d-md-table-cell">{{ $product['id'] }}</td>
                   <td>
                     <div class="wh-60 border d-flex rounded-2 justify-content-center align-items-center"><img src="{{ $product['images'][0] ?? 'image/placeholder.png' }}" class="img-fluid max-h-100"></div>
                   </td>
@@ -154,8 +155,8 @@
                     <a href="{{ $product['url'] }}" target="_blank" title="{{ $product['name'] }}" class="text-dark">{{ $product['name'] }}</a>
                   </td>
                   <td>{{ $product['price_formatted'] }}</td>
-                  <td>{{ $product['created_at'] }}</td>
-                  <td class="text-center">{{ $product['position'] }}</td>
+                  <td class="d-none d-md-table-cell">{{ $product['created_at'] }}</td>
+                  <td class="d-none d-md-table-cell text-center">{{ $product['position'] }}</td>
                   <td class="text-center">{{$product['quantity']}}</td>
                   <td>
                     <div class="
@@ -227,6 +228,7 @@ $(document).ready(function() {
     const fileInput = document.getElementById('import-excel');
     const file = fileInput.files[0];
 
+
     if (!file) {
       alert("Please select an Excel file.");
       return;
@@ -249,51 +251,39 @@ $(document).ready(function() {
 
         // Convert jsonData to the format needed for the POST request
         const formattedData = jsonData.slice(1).map((row, index) => {
-          if (row.length < 23) {
-            console.warn(`Row ${index + 2} has insufficient columns`);
-            return null; // Skip rows with insufficient columns
-          }
-
-          // Helper function to safely parse JSON
-          function safeParse(jsonString) {
-            try {
-              return JSON.parse(jsonString);
-            } catch (e) {
-              console.error(`Error parsing JSON in row ${index + 2}: ${e.message}`);
-              return [];
-            }
-          }
 
           return {
             descriptions: {
               zh_cn: {
                 name: row[0] ? String(row[0]) : "",
                 content: row[1] ? String(row[1]) : "",
-                meta_title: row[2] ? String(row[2]) : "",
-                meta_keywords: row[3] ? String(row[3]) : "",
-                meta_description: row[4] ? String(row[4]) : ""
-              },
-              en: {
-                name: row[5] ? String(row[5]) : "",
-                content: row[6] ? String(row[6]) : "",
-                meta_title: row[7] ? String(row[7]) : "",
-                meta_keywords: row[8] ? String(row[8]) : "",
-                meta_description: row[9] ? String(row[9]) : ""
+                meta_title:  "",
+                meta_keywords: "",
+                meta_description:  ""
               }
             },
-            images: row[10] ? String(row[10]).split(',') : [],
-            video: row[11] ? String(row[11]) : "",
-            position: row[12] ? parseInt(row[12], 10) : 0,
-            weight: row[13] ? parseFloat(row[13]) : 0,
-            weight_class: row[14] ? String(row[14]) : "",
-            brand_name: row[15] ? String(row[15]) : "",
-            brand_id: row[16] ? String(row[16]) : "",
-            tax_class_id: row[17] ? parseInt(row[17], 10) : 0,
-            shipping: row[18] ? String(row[18]) : "1",
-            categories: row[19] ? String(row[19]).split(',') : [],
-            active: row[20] ? String(row[20]) : "1",
-            variables: safeParse(row[21] ? String(row[21]) : "[]"),
-            skus: safeParse(row[22] ? String(row[22]) : "[]")
+            images: row[2] ? String(row[2]).split(',') : [],
+            video: "",
+            position: 0,
+            weight:  0,
+            weight_class: 0,
+            brand_name:  "",
+            brand_id:  0,
+            tax_class_id: 1,
+            shipping:  "1",
+            categories: row[3] ? String(row[3]).split(',') : [],
+            active:"1",
+            variables: [],
+            skus: [ {
+            images: [],
+            is_default: "1",
+            variants: [],
+            // sku: row[6] ?  String(row[6]) : [],
+            model: row[4] ?  String(row[4]) : "",
+            cost_price: row[5] ?  String(row[5]) : 0,
+            origin_price: row[6] ?  String(row[6]) : 0,
+            quantity: row[7] ?  String(row[7]) : 0,
+            }]
           };
         }).filter(item => item !== null);
 
@@ -301,6 +291,9 @@ $(document).ready(function() {
           alert("No valid data found in the Excel file.");
           return;
         }
+
+        console.log('formattedData',formattedData)
+
 
         // Send the formatted data as a POST request
         const token = $('meta[name="csrf-token"]').attr('content');
@@ -361,12 +354,6 @@ $(document).ready(function() {
   });
 });
 </script>
-
-
-
-
-
-
 <script>
 $(document).ready(function() {
   $('#export-excel').click(function() {
@@ -389,15 +376,11 @@ $(document).ready(function() {
         id: data.id,
         brand_id: data.brand_id,
         images: data.images.join(', '), // Join images array into a string
-        // price: data.price,
-        // video: data.video,
-        position: data.position,
         shipping: data.shipping,
         active: data.active,
         tax_class_id: data.tax_class_id,
-        weight: data.weight,
-        weight_class: data.weight_class,
-        // sales: data.sales,
+        weight: data.weight ?? 0,
+        weight_class: data.weight_class ?? 0,
         created_at: data.created_at,
         updated_at: data.updated_at,
         image: data.image,
@@ -424,6 +407,36 @@ $(document).ready(function() {
   });
 });
 </script>
+<script>
+
+  $(document).ready(function() {
+    $('#export-example-excel').click(function() {
+      const data = [{
+        name:"",
+        description:"",
+        images: "điền link img cách nhau bởi dấu phẩy",
+        // position: 0,
+        // tax_class_id: 1,
+        categories: "Điền ID của category và cách nhau bởi dấu phẩy",
+        // skus: 'Điền mã sku của sản phẩm',
+        model: "Điền mã model của sản phẩm",
+        cost_price: 'Giá trước thuế',
+        origin_price: 'Gia gốc',
+        quantity: 'Số lượng tồn kho'
+      }];
+      try {
+         const wb = XLSX.utils.book_new();
+         const ws = XLSX.utils.json_to_sheet(data);
+         XLSX.utils.book_append_sheet(wb, ws, 'Products');
+
+        // Export to Excel
+        XLSX.writeFile(wb, 'products_data_example.xlsx');
+          }catch (error) {
+            console.error('Error:', error);
+          }
+    });
+  })
+  </script>
 
 
   <script>

@@ -2,9 +2,7 @@
 /**
  * order.php
  *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
+
  * @created    2022-08-02 14:22:41
  * @modified   2022-08-02 14:22:41
  */
@@ -38,7 +36,7 @@ return [
     'origin_price'         => 'Giá gốc',
     'cost_price'           => 'Giá vốn',
     'quantity'             => 'Số lượng',
-    'enable_multi_spec'    => 'Bật nhiều mô tả',
+    'enable_multi_spec'    => 'Tùy chọn sản phẩm',
     'image_help'           => 'Hình ảnh đầu tiên sẽ được sử dụng làm hình ảnh chính của sản phẩm, và nhiều hình ảnh có thể được tải lên cùng một lúc, vị trí của nhiều hình ảnh có thể được điều chỉnh theo ý muốn',
     'video_help'           => 'Nếu lời nhắc vượt quá giới hạn kích thước hệ thống, vui lòng sửa đổi tham số php.ini post_max_size',
     'add_variable'         => 'Thêm mô tả',

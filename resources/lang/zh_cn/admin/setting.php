@@ -2,9 +2,7 @@
 /**
  * Lang.php
  *
- * @copyright  2023 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
+
  * @created    2023-09-09 09:09:09
  * @modified   2023-12-12 07:48:50
  */
@@ -26,8 +24,8 @@ return [
     'design_index'                => 'Trình xây dựng Thiết kế',
     'design_menu_index'           => 'Thiết kế Menu',
     'email'                       => 'Email',
-    'enable_tax'                  => 'Bật tính năng Thuế',
-    'enable_tax_info'             => 'Cho phép tính toán thuế hay không',
+    'enable_tax'                  => 'Hiển thị thuế ',
+    'enable_tax_info'             => 'Hiển thị thông tin thuế ở đơn hàng',
     'express_code_help'           => 'Số, chữ cái, gạch dưới',
     'favicon'                     => 'Biểu tượng trang web',
     'favicon_info'                => 'Biểu tượng nhỏ hiển thị trên tab trình duyệt phải có định dạng PNG và kích thước là: 32*32',

@@ -1,19 +1,9 @@
 <?php
-/**
- * ProductSimple.php
- *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
- * @created    2022-06-23 11:33:06
- * @modified   2022-06-23 11:33:06
- */
 
 namespace Beike\Shop\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Log;
 
 class ProductSimple extends JsonResource
 {
@@ -29,13 +19,13 @@ class ProductSimple extends JsonResource
         $masterSku = $this->masterSku;
 
         if (empty($masterSku)) {
-            throw new \Exception("invalid master sku for product {$this->id}");
+            throw new \Exception("Invalid master sku for product {$this->id}");
         }
 
-        $name   = $this->description->name ?? '';
-        $images = $this->images;
+        $name      = $this->description->name ?? '';
+        $images    = $this->images;
         $discount  = 0;
-        if($masterSku->origin_price > 0){
+        if ($masterSku->origin_price > 0) {
             $discount = round((($masterSku->origin_price - $masterSku->price) / $masterSku->origin_price) * 100);
         }
         $data = [

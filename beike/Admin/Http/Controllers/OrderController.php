@@ -1,37 +1,26 @@
 <?php
-/**
- * OrderController.php
- *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
- * @created    2022-07-05 10:45:26
- * @modified   2022-07-05 10:45:26
- */
+
 
 namespace Beike\Admin\Http\Controllers;
 
 use Beike\Admin\Http\Resources\OrderSimple;
 use Beike\Models\Order;
+use Beike\Models\OrderProduct;
 use Beike\Models\OrderShipment;
+use Beike\Models\OrderTotal;
 use Beike\Repositories\OrderRepo;
+use Beike\Repositories\PluginRepo;
 use Beike\Services\ShipmentService;
 use Beike\Services\StateMachineService;
 use Beike\Shop\Http\Resources\Account\OrderShippingList;
 use Beike\Shop\Http\Resources\Account\OrderSimpleList;
+use Beike\Shop\Http\Resources\Checkout\PaymentMethodItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
-    /**
-     * 获取订单列表
-     *
-     * @param Request $request
-     * @return mixed
-     * @throws \Exception
-     */
     public function index(Request $request)
     {
         $orders = OrderRepo::filterOrders($request->all());
@@ -45,13 +34,6 @@ class OrderController extends Controller
         return view('admin::pages.orders.index', $data);
     }
 
-    /**
-     * 获取订单回收站列表
-     *
-     * @param Request $request
-     * @return mixed
-     * @throws \Exception
-     */
     public function trashed(Request $request)
     {
         $requestData            = $request->all();
@@ -67,13 +49,6 @@ class OrderController extends Controller
         return view('admin::pages.orders.index', $data);
     }
 
-    /**
-     * 导出订单列表
-     *
-     * @param Request $request
-     * @return mixed
-     * @throws \Exception
-     */
     public function export(Request $request)
     {
         try {
@@ -87,14 +62,6 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * 查看单个订单
-     *
-     * @param Request $request
-     * @param Order   $order
-     * @return mixed
-     * @throws \Exception
-     */
     public function show(Request $request, Order $order)
     {
         $order->load(['orderTotals', 'orderHistories', 'orderShipments', 'orderPayments']);
@@ -104,17 +71,57 @@ class OrderController extends Controller
         $data['expressCompanies'] = system_setting('base.express_company', []);
         hook_action('admin.order.show.after', $data);
 
+        Log::info('ádasd',['ádad'=>$data]);
         return view('admin::pages.orders.form', $data);
     }
 
-    /**
-     * 更新订单状态,添加订单更新日志
-     *
-     * @param Request $request
-     * @param Order   $order
-     * @return array
-     * @throws \Throwable
-     */
+    public function edit(Request $request, Order $order)
+    {
+        $order->load(['orderTotals', 'orderHistories', 'orderShipments', 'orderPayments']);
+        $payments                 = PaymentMethodItem::collection(PluginRepo::getPaymentMethods())->jsonSerialize();
+        $data                     = hook_filter('admin.order.edit.data', ['order' => $order, 'html_items' => []]);
+        $data['statuses']         = StateMachineService::getInstance($order)->nextBackendStatuses();
+        $data['paymentMethod']    = $payments;
+        $data['expressCompanies'] = system_setting('base.express_company', []);
+        hook_action('admin.order.edit.after', $data);
+
+        return view('admin::pages.orders.edit', $data);
+    }
+
+    public function update(Request $request, Order $order)
+    {
+        $requestData = $request->all();
+
+        // Update Order
+        Order::where('id', $requestData['id'])->update([
+            'payment_method_code' => $requestData['paymentMethod']['code'],
+            'payment_method_name' => $requestData['paymentMethod']['name'],
+            'total'               => $requestData['orderTotals']['order_total'],
+        ]);
+
+        // Update Order Products
+        foreach ($requestData['products'] as $productData) {
+            OrderProduct::where('id', $productData['id'])
+                ->update([
+                    'product_sku' => $productData['sku'],
+                    'name'        => $productData['name'],
+                    'price'       => $productData['price'],
+                    'quantity'    => $productData['quantity'],
+                ]);
+        }
+
+        // Update Order Totals
+        foreach ($requestData['orderTotals'] as $code => $value) {
+            OrderTotal::where('order_id', $requestData['id'])
+                ->where('code', $code)->update([
+                'value' => $value,
+            ]);
+        }
+
+        // Return a response or redirect
+        return response()->json(['message' => 'Order updated successfully']);
+    }
+
     public function updateStatus(Request $request, Order $order)
     {
         $status  = $request->get('status');

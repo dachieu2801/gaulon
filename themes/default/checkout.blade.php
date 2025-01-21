@@ -11,8 +11,20 @@
 
 @section('content')
   <x-shop-breadcrumb type="static" value="checkout.index" />
+  <style>
+     #checkoutTab .nav-link{
+      color : white;
+      background-color : #6c757d;
+      margin : 0 10px;
+      font-size : 16px;
+    }
+    #checkoutTab .nav-link.active{
+      color: white!important;
+      background-color : #fb5831!important;
+    }
+  </style>
 
-  <div class="container">
+  <div class="container ">
     @if (!is_mobile())
       <div class="row mt-1 justify-content-center">
         <div class="col-12 col-md-9">@include('shared.steps', ['steps' => 2])</div>
@@ -35,65 +47,76 @@
         <div class="card shadow-sm">
           <div class="card-body p-lg-4">
             @hook('checkout.body.header')
+            <div>
+     
 
-            @include('checkout._address')
-            <h5 class="checkout-title">Thời gian nhận hàng :</h5>
-  <div class="form-group ">
-    <select class="form-select" name="receive_time" required>
-      <option value="" disabled selected>Vui lòng chọn thời gian</option>
-      
-      <option value="7h-12h">7h-12h</option>
-      <option value="12h-14h">12h-14h</option>
-      <option value="14h-16h">14h-16h</option>
-      <option value="16h-18h">16h-18h</option>
-      <option value="18h-after">18h trở đi</option>
-    </select>
-  </div>
-  @if(!empty($vouchers))
-               <div class="checkout-black mt-5"  id="vouchersssssss">
-                  <h5 class="checkout-title">Mã giảm giá</h5>
+  <ul class="nav nav-tabs" id="checkoutTab" role="tablist">
+    <!-- Tab for Giao hàng tận nơi -->
+    @if ($address_status == '1')
 
-                  <div class="radio-line-wrap" id="voucher-wrap">
-                   
-                    @foreach ($vouchers as $voucher)
-                      <div class="radio-line-item {{ $voucher['id'] == $current['voucher_id'] ? 'active' : '' }}" data-key="voucher_id" data-value="{{ $voucher['id'] }}">
-                        <div class="left">
-                          <span class="radio"></span>
+    <li class="nav-item" role="presentation">
+        <button
+      class="nav-link {{ ($current['receiving_method'] == 'shipping') ? 'active' : '' }} "
+      id="home-delivery-tab"
+      data-bs-toggle="tab"
+      data-bs-target="#home-delivery"
+      type="button"
+      role="tab"
+      aria-controls="home-delivery"
+      aria-selected="true">
+       Giao hàng tận nơi
+        </button>
+    </li>
+    @endif
+    <!-- Tab for Đến lấy hàng -->
+     @if($store_address_status == '1')
+    <li class="nav-item" role="presentation">
+        <button
+      class="nav-link {{ ($current['receiving_method'] == 'pick_up_items' ) ? 'active' : '' }}"
+      id="store-pickup-tab"
+      data-bs-toggle="tab"
+      data-bs-target="#store-pickup"
+      type="button" role="tab"
+      aria-controls="store-pickup"
+      aria-selected="false">
+      Đến lấy hàng
+      </button>
+    </li>
+    @endif
+  </ul>
 
-                        </div>
-                        <div class="right ">
-                          <h5 class="font-weight-bold">{{ $voucher['name'] }}</h5>
-                          <div class="sub-title">Giảm {{$voucher['discount_type'] === 'percentage' ?   $voucher['discount_value'].'%'  : $voucher['value_format']}}</div>
-                        </div>
-                      </div>
-                    @endforeach
-                  
-                    
-                  </div>
-                </div>
-                @endif
+  <div class="tab-content" id="checkoutTabContent">
+    <!-- Giao hàng tận nơi content -->
 
-            <div class="checkout-black mt-5">
-              <h5 class="checkout-title">{{ __('shop/checkout.payment_method') }}</h5>
-              <div class="radio-line-wrap" id="payment-methods-wrap">
-                @foreach ($payment_methods as $payment)
-                  <div class="radio-line-item {{ $payment['code'] == $current['payment_method_code'] ? 'active' : '' }}" data-key="payment_method_code" data-value="{{ $payment['code'] }}">
-                    <div class="left">
-                      <span class="radio"></span>
-                      <img src="{{ $payment['icon'] }}" class="img-fluid">
-                    </div>
-                    <div class="right ms-2">
-                      <div class="title">{{ $payment['name'] }}</div>
-                      <div class="sub-title">{!! $payment['description'] !!}</div>
-                    </div>
-                  </div>
-                @endforeach
-              </div>
-            </div>
+    <div class="tab-pane fade {{ ($current['receiving_method'] == 'pick_up_items' )  ? 'show active' : '' }} mt-5" id="store-pickup" role="tabpanel" aria-labelledby="store-pickup-tab">
+      <div>
+        @include('checkout._shop_address')
+      </div>
+    </div>
 
-            @if ($shipping_require)
+
+    <!-- Đến lấy hàng content -->
+
+    <div class="tab-pane fade {{ ($current['receiving_method'] == 'shipping' ) ? 'show active' : '' }} mt-5" id="home-delivery" role="tabpanel" aria-labelledby="home-delivery-tab">
+      <div>
+        @include('checkout._address')
+        <h5 class="checkout-title">Thời gian nhận hàng :</h5>
+        <div class="form-group">
+          <select class="form-select" name="receive_time" required>
+            <option value="" disabled selected>Vui lòng chọn thời gian</option>
+            <option value="7h-12h">7h-12h</option>
+            <option value="12h-14h">12h-14h</option>
+            <option value="14h-16h">14h-16h</option>
+            <option value="16h-18h">16h-18h</option>
+            <option value="18h-after">18h trở đi</option>
+          </select>
+        </div>
+      </div>
+      @if ($shipping_require)
               @hookwrapper('checkout.shipping_method')
-              <div class="checkout-black">
+             
+         
+              <div class="checkout-black mt-5">
                 <h5 class="checkout-title">{{ __('shop/checkout.delivery_method') }}</h5>
                 <div class="radio-line-wrap" id="shipping-methods-wrap">
                   @foreach ($shipping_methods as $methods)
@@ -115,16 +138,64 @@
                   @endforeach
                 </div>
               </div>
+         
               @endhookwrapper
             @endif
+    </div>
 
-            <div class="checkout-black">
+  </div>
+</div>
+         @if(!empty($vouchers))
+               <div class=" mt-5 my-5"  id="vouchersssssss">
+                  <h5 class="checkout-title">Mã giảm giá</h5>
+
+                  <div class="radio-line-wrap" id="voucher-wrap">
+
+                    @foreach ($vouchers as $voucher)
+                      <div class="radio-line-item {{ $voucher['id'] == $current['voucher_id'] ? 'active' : '' }}" data-key="voucher_id" data-value="{{ $voucher['id'] }}">
+                        <div class="left">
+                          <span class="radio"></span>
+
+                        </div>
+                        <div class="right ">
+                          <h5 class="font-weight-bold">{{ $voucher['name'] }}</h5>
+                          <div class="sub-title">Giảm {{$voucher['discount_type'] === 'percentage' ?   $voucher['discount_value'].'%'  : $voucher['value_format']}}</div>
+                        </div>
+                      </div>
+                    @endforeach
+
+
+                  </div>
+                </div>
+                @endif
+        
+            <div class=" mt-5 mt-5">
+              <h5 class="checkout-title">{{ __('shop/checkout.payment_method') }}</h5>
+              <div class="radio-line-wrap" id="payment-methods-wrap">
+                @foreach ($payment_methods as $payment)
+                  <div class="radio-line-item {{ $payment['code'] == $current['payment_method_code'] ? 'active' : '' }}" data-key="payment_method_code" data-value="{{ $payment['code'] }}">
+                    <div class="left">
+                      <span class="radio"></span>
+                      <img src="{{ $payment['icon'] }}" class="img-fluid">
+                    </div>
+                    <div class="right ms-2">
+                      <div class="title">{{ $payment['name'] }}</div>
+                      <div class="sub-title">{!! $payment['description'] !!}</div>
+                    </div>
+                  </div>
+                @endforeach
+              </div>
+            </div>
+
+
+
+            <div class=" mt-5">
               <h5 class="checkout-title">{{ __('shop/checkout.comment') }}</h5>
               <div class="comment-wrap" id="comment-wrap">
                 <textarea rows="5" type="text" class="form-control" name="comment" placeholder="{{ __('shop/checkout.comment') }}">{{ old('comment', $comment ?? '') }}</textarea>
               </div>
             </div>
-            
+
 
             @hook('checkout.bottom')
           </div>
@@ -143,7 +214,7 @@
               </div>
             </div>
           @endif
-          
+
 
           <div class="card total-wrap p-lg-4 p-md-2 shadow-sm">
             <div class="card-header d-flex align-items-center justify-content-between">
@@ -184,7 +255,7 @@
                 @foreach ($totals as $total)
                   <li><span>{{ $total['title'] }}</span><span>{{ $total['amount_format'] }}</span></li>
                 @endforeach
-                
+
               </ul>
               <div class="d-grid gap-2 mt-3 submit-checkout-wrap">
                 @if (is_mobile())
@@ -213,6 +284,7 @@
 @push('add-scripts')
 <script>
   $(document).ready(function() {
+
     $(document).on('click', '.radio-line-item', function(event) {
       if ($(this).hasClass('active')) return;
       console.log($(this).data('key'), $(this).data('value'))
@@ -224,15 +296,15 @@
         const payment = config.isLogin ? checkoutAddressApp.form.payment_address_id : checkoutAddressApp.source.guest_payment_address;
         const voucherId = $('#voucher-wrap .radio-line-item.active').data('value');
 
-        if (checkoutAddressApp.shippingRequired && !address) {
-            layer.msg('{{ __('shop/checkout.error_address') }}', ()=>{})
-            return;
-        }
+        // if (checkoutAddressApp.shippingRequired && !address) {
+        //     layer.msg('{{ __('shop/checkout.error_address') }}', ()=>{})
+        //     return;
+        // }
 
-        if (!payment) {
-            layer.msg('{{ __('shop/checkout.error_payment_address') }}', ()=>{})
-            return;
-        }
+        // if (!payment) {
+        //     layer.msg('{{ __('shop/checkout.error_payment_address') }}', ()=>{})
+        //     return;
+        // }
 
         let data = {
             receive_time: $('select[name=receive_time]').val(),
@@ -248,7 +320,25 @@
     $('.guest-checkout-login').click(function(event) {
       bk.openLogin();
     });
+    $('#home-delivery-tab').click(function(event) {
+      updateReceiveMethod('shipping')
+    });
+    $('#store-pickup-tab').click(function(event) {
+      updateReceiveMethod('pick_up_items')
+    });
   });
+
+  const updateReceiveMethod = ( value, callback) => {
+    $http.put('/checkout', {receiving_method: value}).then((res) => {
+      if (res.status == 'fail') {
+        layer.msg(res.message, ()=>{})
+        return;
+      }
+      if (typeof callback === 'function') {
+        callback(res)
+      }
+    })
+  }
 
   const updateCheckout = (key, value, callback) => {
     $http.put('/checkout', {[key]: value}).then((res) => {
@@ -331,6 +421,20 @@
 
     $('#voucher-wrap').replaceWith('<div class="radio-line-wrap" id="voucher-wrap">' + html + '</div>');
   }
+
 </script>
+<script>
+  // Initialize Bootstrap's Tab functionality (Bootstrap 5+)
+  var triggerTabList = [].slice.call(document.querySelectorAll('#checkoutTab button'))
+  triggerTabList.forEach(function (triggerEl) {
+    var tabTrigger = new bootstrap.Tab(triggerEl)
+
+    triggerEl.addEventListener('click', function (event) {
+      event.preventDefault()
+      tabTrigger.show()
+    })
+  })
+</script>
+<script></script>
 @endpush
 

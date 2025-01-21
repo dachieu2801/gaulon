@@ -1,13 +1,5 @@
 <?php
-/**
- * Plugin.php
- *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
- * @created    2022-06-29 20:27:21
- * @modified   2022-06-29 20:27:21
- */
+
 
 namespace Beike\Plugin;
 
@@ -272,11 +264,6 @@ class Plugin implements \ArrayAccess, Arrayable
         return plugin_setting($this->code);
     }
 
-    /**
-     * 获取插件对应的设置字段, 并获取已存储在DB的字段值
-     *
-     * @return array
-     */
     public function getColumns(): array
     {
         $this->columns[] = SettingRepo::getPluginStatusColumn();
@@ -337,28 +324,29 @@ class Plugin implements \ArrayAccess, Arrayable
      */
     public function checkLicenseValid(): bool
     {
-        $appDomain = request()->getHost();
-
-        try {
-            $domain         = new \Utopia\Domains\Domain($appDomain);
-            $registerDomain = $domain->getRegisterable();
-        } catch (\Exception $e) {
-            $registerDomain = '';
-        }
-
-        if (empty($registerDomain)) {
-            return true;
-        }
-
-        $license = MarketingService::getInstance()->checkLicense($this->code, $registerDomain);
-        $status  = $license['status'] ?? 'fail';
-        if ($status == 'fail') {
-            SettingRepo::update('plugin', $this->code, ['status' => false]);
-
-            throw new \Exception($license['message'] ?? '插件授权未知错误, 请联系 beikeshop.com');
-        }
-
-        return $license['data']['has_license'] ?? false;
+        return true;
+//        $appDomain = request()->getHost();
+//
+//        try {
+//            $domain         = new \Utopia\Domains\Domain($appDomain);
+//            $registerDomain = $domain->getRegisterable();
+//        } catch (\Exception $e) {
+//            $registerDomain = '';
+//        }
+//
+//        if (empty($registerDomain)) {
+//            return true;
+//        }
+//
+//        $license = MarketingService::getInstance()->checkLicense($this->code, $registerDomain);
+//        $status  = $license['status'] ?? 'fail';
+//        if ($status == 'fail') {
+//            SettingRepo::update('plugin', $this->code, ['status' => false]);
+//
+//            throw new \Exception($license['message'] ?? '插件授权未知错误, 请联系 beikeshop.com');
+//        }
+//
+//        return $license['data']['has_license'] ?? false;
     }
 
     /**

@@ -335,7 +335,7 @@
     echo '</div>';
 }
     @endphp
-    <div>
+    <!-- <div>
       <div class="my-4 text-lg"><h5 class="fw-medium text-uppercase">{{__('shop/common.categories')}}</h5></div>
       <div class="">
 {{--          <div class="footer-categories d-flex gap-3 flex-wrap flex-column w-100 align-content-start overflow-auto">--}}
@@ -365,7 +365,7 @@
               </div>
             @endforeach
             @endif
-          </div>
+          </div> -->
 
     <div class="footer-content">
       <div class="row">
@@ -385,25 +385,31 @@
             </div>
           </div>
         </div>
-        @for ($i = 1; $i <= 3; $i++)
-          @php
-            $link = $footer_content['content']['link' . $i];
-          @endphp
-          <div class="col-12 col-md footer-content-link{{ $i }} footer-link-wrap">
-            <h6 class="text-uppercase text-dark">{{ $link['title'][locale()] ?? '' }}<span class="icon-open"><i class="bi bi-plus-lg"></i></span></h6>
-            <ul class="list-unstyled">
-              @foreach ($link['links'] as $item)
-                @if ($item['link'])
-                <li class="lh-lg mb-2">
-                  <a href="{{ $item['link'] }}" @if (isset($item['new_window']) && $item['new_window']) target="_blank" @endif>
-                    {{ $item['text'] }}
-                  </a>
-                </li>
-              @endif
-              @endforeach
-            </ul>
-          </div>
-        @endfor
+        @foreach ($footer_content['content'] as $key => $link)
+  @if (strpos($key, 'link') === 0 && !empty($link))
+    <div class="col-12 col-md footer-content-{{ $key }} footer-link-wrap">
+      <h6 class="text-uppercase text-dark">
+        {{ $link['title'][locale()] ?? '' }}
+        <span class="icon-open"><i class="bi bi-plus-lg"></i></span>
+      </h6>
+
+      @if (!empty($link['links']))
+        <ul class="list-unstyled">
+          @foreach ($link['links'] as $item)
+            @if (!empty($item['link']))
+              <li class="lh-lg mb-2">
+                <a href="{{ $item['link'] }}" 
+                   @if (!empty($item['new_window'])) target="_blank" @endif>
+                  {{ $item['text'] ?? '' }}
+                </a>
+              </li>
+            @endif
+          @endforeach
+        </ul>
+      @endif
+    </div>
+  @endif
+@endforeach
 
         @hook('footer.contact.before')
         @hookwrapper('footer.contact')
@@ -433,10 +439,8 @@
       <div class="row align-items-center">
         <div class="col">
           <div class="d-flex flex-wrap">
-            <!-- 删除版权信息, 请先购买授权 https://beikeshop.com/vip/subscription -->
-            @if(!check_license())
-              Powered By&nbsp;<a href="https://beikeshop.com/" target="_blank" rel="noopener">BeikeShop</a>&nbsp;-&nbsp;
-            @endif
+
+
             {!! $footer_content['bottom']['copyright'][locale()] ?? '' !!}
           </div>
         </div>

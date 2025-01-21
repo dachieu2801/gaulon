@@ -2,9 +2,7 @@
 /**
  * OrderShippingList.php
  *
- * @copyright  2023 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     TL <mengwb@guangda.work>
+
  * @created    2023-11-28 10:39:55
  * @modified   2023-11-28 10:39:55
  */
@@ -40,6 +38,11 @@ class OrderShippingList extends JsonResource
             'created_at'              => $this->created_at,
             'status_format'           => $this->status_format,
             'status'                  => $this->status,
+            'pick_up_address'         => $this->pick_up_address,
+            'pick_up_time'            => $this->pick_up_time,
+            'name'            => $this->name,
+            'phone'            => $this->phone,
+            'receiving_method' => $this->receiving_method
         ];
 
         return $data;

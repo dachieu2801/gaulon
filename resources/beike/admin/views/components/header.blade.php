@@ -46,9 +46,6 @@
       </div>
       <ul class="navbar navbar-right">
         @if (!check_license())
-        <div class="alert alert-warning mb-0 warning-copyright">
-          <i class="bi bi-exclamation-triangle-fill"></i> {!! __('admin/common.copyright_hint_text') !!}
-        </div>
         @endif
 
         @hookwrapper('admin.header.upgrade')
@@ -73,7 +70,7 @@
 
         @hookwrapper('admin.header.language')
         <li class="nav-item">
-          <div class="dropdown">
+          <!-- <div class="dropdown">
             <a class="nav-link dropdown-toggle" href="javascript:void(0)" data-bs-toggle="dropdown">{{ $admin_language['name'] }}</a>
 
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuLink">
@@ -81,7 +78,7 @@
               <li><a href="{{ admin_route('edit.locale', ['locale' => $language['code']]) }}" class="dropdown-item">{{ $language['name'] }}</a></li>
               @endforeach
             </ul>
-          </div>
+          </div> -->
         </li>
         @endhookwrapper
 

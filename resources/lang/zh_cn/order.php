@@ -2,9 +2,7 @@
 /**
  * order.php
  *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
+
  * @created    2022-08-02 14:22:41
  * @modified   2022-08-02 14:22:41
  */
@@ -31,7 +29,7 @@ return [
     'order_status'       => 'Trạng thái đơn hàng',
     'product_sub_price'  => 'Tổng phụ',
     'current_status'     => 'Hiện tại',
-    'change_to_status'   => 'Chuyển đến',
+    'change_to_status'   => 'Trạng thái',
     'comment'            => 'Bình luận',
     'submit_status'      => 'Gửi',
 

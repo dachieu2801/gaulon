@@ -1,13 +1,4 @@
 <?php
-/**
- * TaxClassRepo.php
- *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
- * @created    2022-07-26 21:08:07
- * @modified   2022-07-26 21:08:07
- */
 
 namespace Beike\Admin\Repositories;
 
@@ -20,12 +11,29 @@ class TaxClassRepo
 
     public static function getList()
     {
+        $taxClass = TaxClass::query()
+            ->with([
+                'taxRates.region',
+                'taxRules',
+            ])
+            ->orderBy('id', 'asc')
+            ->get();
+
+        return TaxClassDetail::collection($taxClass)->jsonSerialize();
+    }
+
+    public static function getById($id)
+    {
         $taxClass = TaxClass::query()->with([
             'taxRates.region',
             'taxRules',
-        ])->get();
+        ])->find($id);
 
-        return TaxClassDetail::collection($taxClass)->jsonSerialize();
+        if (! $taxClass) {
+            return response()->json(['message' => 'Tax class not found'], 404);
+        }
+
+        return (new TaxClassDetail($taxClass))->jsonSerialize();
     }
 
     public static function createOrUpdate($data)
@@ -34,7 +42,7 @@ class TaxClassRepo
         if ($id) {
             $taxClass = TaxClass::query()->findOrFail($id);
         } else {
-            $taxClass = new TaxClass();
+            $taxClass = new TaxClass;
         }
         $taxClass->fill([
             'title'       => $data['title'],

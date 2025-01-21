@@ -2,9 +2,7 @@
 /**
  * CheckoutController.php
  *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
+
  * @created    2022-06-28 16:47:57
  * @modified   2022-06-28 16:47:57
  */
@@ -14,8 +12,10 @@ namespace Beike\Shop\Http\Controllers;
 //use Beike\Notifications\sendNewOrderNotification;
 use Beike\Mail\SendNotifyOrder;
 use Beike\Models\AdminUser;
+use Beike\Models\Setting;
 use Beike\Models\TaxClass;
 use Beike\Repositories\OrderRepo;
+use Beike\Repositories\SettingRepo;
 use Beike\Repositories\VouchersRepo;
 use Beike\Shop\Services\CheckoutService;
 use Illuminate\Http\Request;
@@ -24,286 +24,13 @@ use Illuminate\Support\Facades\Mail;
 
 class CheckoutController extends Controller
 {
-    public function index()
-    {
-        try {
-            $data              = (new CheckoutService)->checkoutData();
-            $data              = hook_filter('checkout.index.data', $data);
-
-            if ($data['current']['payment_method_code'] == 'vn_pay') {
-                $newTotals      = [];
-                $orderTotal     = null;
-                foreach ($data['totals'] as $item) {
-                    if ($item['code'] === 'order_total') {
-                        $orderTotal = $item;
-                    } else {
-                        $newTotals[] = $item;
-                    }
-                }
-
-                $amount       = round($orderTotal['amount'] * 0.05);
-                $newTotals[]  = [
-                    'code'          => 'paypay_fee',
-                    'title'         => 'Phí thanh toán qua PayPay(5%)',
-                    'amount'        => $amount,
-                    'amount_format' => currency_format($amount),
-                ];
-                $amountTotal = round($amount + $orderTotal['amount']);
-                $newTotals[] = [
-                    'code'          => 'order_total',
-                    'title'         => trans('shop/carts.order_total'),
-                    'amount'        => $amountTotal,
-                    'amount_format' => currency_format($amountTotal),
-                ];
-                $data['totals'] = $newTotals;
-
-            }
-
-            if ($data['current']['voucher_id']) {
-                $voucher = (new VouchersRepo)->getByIdActive($data['current']['voucher_id']);
-                if (! $voucher) {
-                    $data['current']['voucher_id'] = 0;
-                } else {
-                    $newTotals      = [];
-                    $orderTotal     = null;
-                    foreach ($data['totals'] as $item) {
-                        if ($item['code'] === 'order_total') {
-                            $orderTotal = $item;
-                        } else {
-                            $newTotals[] = $item;
-                        }
-                    }
-                    if ($voucher['discount_type'] == 'percentage') {
-                        $amount       = round(floatval($voucher['discount_value']) / 100 * floatval($orderTotal['amount']));
-                        $newTotals[]  = [
-                            'code'          => 'voucher_id',
-                            'title'         => $voucher['name'],
-                            'amount'        => $amount,
-                            'amount_format' => '- ' . currency_format($amount),
-                        ];
-                        $amountTotal =  floatval($orderTotal['amount']) - $amount < 0 ? 0 : floatval($orderTotal['amount']) - $amount;
-                        $newTotals[] = [
-                            'code'          => 'order_total',
-                            'title'         => trans('shop/carts.order_total'),
-                            'amount'        => $amountTotal,
-                            'amount_format' => currency_format($amountTotal),
-                        ];
-                    } else {
-                        $amount       = round($voucher['discount_value']);
-                        $newTotals[]  = [
-                            'code'          => 'voucher_id',
-                            'title'         => $voucher['name'],
-                            'amount'        => $amount,
-                            'amount_format' => '- ' . currency_format($amount),
-                        ];
-                        $amountTotal =  round(max(floatval($orderTotal['amount']) - $amount, 0));
-                        $newTotals[] = [
-                            'code'          => 'order_total',
-                            'title'         => trans('shop/carts.order_total'),
-                            'amount'        => $amountTotal,
-                            'amount_format' => currency_format($amountTotal),
-                        ];
-                    }
-                    $data['totals'] = $newTotals;
-                }
-
-            }
-
-            $amount     = 0;
-            $titleTax   = 'Đã bao gồm các loại thuế';
-            $taxClasses = TaxClass::with('taxRates')->get();
-            $taxNames   = [];
-
-            $taxClassMap = [];
-            foreach ($taxClasses as $taxClass) {
-                $taxClassMap[$taxClass->id] = $taxClass->taxRates->pluck('name')->toArray();
-            }
-
-            $newTotals      = [];
-            $orderTotal     = null;
-            foreach ($data['totals'] as $item) {
-                if ($item['code'] === 'order_total') {
-                    $orderTotal = $item;
-                } else {
-                    $newTotals[] = $item;
-                }
-            }
-
-            foreach ($data['carts']['carts'] as $product) {
-                if ($product['price'] > $product['cost_price']) {
-                    $amount += round(($product['price'] - $product['cost_price']) * $product['quantity']);
-                }
-
-                // Kiểm tra tax_class_id và thêm tên thuế vào mảng
-                $taxClassId = $product['tax_class_id'];
-                if (isset($taxClassMap[$taxClassId])) {
-                    $taxNames = array_merge($taxNames, $taxClassMap[$taxClassId]);
-                }
-            }
-
-            $taxNames = array_unique($taxNames);
-
-            if (! empty($taxNames)) {
-                $titleTax .= ' (' . implode(', ', $taxNames) . ')';
-            }
-
-            if ($amount > 0) {
-                $newTotals[] = [
-                    'code'          => 'tax_fee',
-                    'title'         => $titleTax,
-                    'amount'        => round($amount),
-                    'amount_format' => currency_format($amount),
-                ];
-            }
-            $newTotals[]    = $orderTotal;
-            $data['totals'] = $newTotals;
-
-            return view('checkout', $data);
-        } catch (\Exception $e) {
-            return redirect(shop_route('carts.index'))->withErrors(['error' => $e->getMessage()]);
-        }
-    }
-
-    /**
-     * 更改结算信息
-     *
-     * @param Request $request
-     * @return mixed
-     */
     public function update(Request $request): mixed
     {
         try {
             $requestData = $request->all();
+            $data        = (new CheckoutService)->update($requestData);
 
-            $data       = (new CheckoutService)->update($requestData);
-
-            if ($data['current']['payment_method_code'] == 'vn_pay') {
-                $newTotals      = [];
-                $orderTotal     = null;
-                foreach ($data['totals'] as $item) {
-                    if ($item['code'] === 'order_total') {
-                        $orderTotal = $item;
-                    } else {
-                        $newTotals[] = $item;
-                    }
-                }
-
-                $amount       = round($orderTotal['amount'] * 0.05);
-                $newTotals[]  = [
-                    'code'          => 'voucher_id',
-                    'title'         => 'Phí thanh toán qua PayPay(5%)',
-                    'amount'        => $amount,
-                    'amount_format' => currency_format($amount),
-                ];
-                $amountTotal = round($amount + $orderTotal['amount']);
-                $newTotals[] = [
-                    'code'          => 'order_total',
-                    'title'         => trans('shop/carts.order_total'),
-                    'amount'        => $amountTotal,
-                    'amount_format' => currency_format($amountTotal),
-                ];
-                $data['totals'] = $newTotals;
-
-            }
-
-            if ($data['current']['voucher_id']) {
-                $voucher = (new VouchersRepo)->getByIdActive($data['current']['voucher_id']);
-                if (! $voucher) {
-                    $data['current']['voucher_id'] = 0;
-                } else {
-                    $newTotals      = [];
-                    $orderTotal     = null;
-                    foreach ($data['totals'] as $item) {
-                        if ($item['code'] === 'order_total') {
-                            $orderTotal = $item;
-                        } else {
-                            $newTotals[] = $item;
-                        }
-                    }
-                    if ($voucher['discount_type'] == 'percentage') {
-                        $amount       = floatval($voucher['discount_value']) / 100 * floatval($orderTotal['amount']);
-                        $newTotals[]  = [
-                            'code'          => 'voucher_id',
-                            'title'         => $voucher['name'],
-                            'amount'        => $amount,
-                            'amount_format' => '- ' . currency_format($amount),
-                        ];
-                        $amountTotal =  floatval($orderTotal['amount']) - $amount < 0 ? 0 : floatval($orderTotal['amount']) - $amount;
-                        $newTotals[] = [
-                            'code'          => 'order_total',
-                            'title'         => trans('shop/carts.order_total'),
-                            'amount'        => $amountTotal,
-                            'amount_format' => currency_format($amountTotal),
-                        ];
-                    } else {
-                        $amount       = floatval($voucher['discount_value']);
-                        $newTotals[]  = [
-                            'code'          => 'voucher_id',
-                            'title'         => $voucher['name'],
-                            'amount'        => $amount,
-                            'amount_format' => '- ' . currency_format($amount),
-                        ];
-                        $amountTotal = max(floatval($orderTotal['amount']) - $amount, 0);
-                        $newTotals[] = [
-                            'code'          => 'order_total',
-                            'title'         => trans('shop/carts.order_total'),
-                            'amount'        => $amountTotal,
-                            'amount_format' => currency_format($amountTotal),
-                        ];
-                    }
-                    $data['totals'] = $newTotals;
-                }
-
-            }
-
-            $amount     = 0;
-            $titleTax   = 'Đã bao gồm các loại thuế';
-            $taxClasses = TaxClass::with('taxRates')->get();
-            $taxNames   = [];
-
-            $taxClassMap = [];
-            foreach ($taxClasses as $taxClass) {
-                $taxClassMap[$taxClass->id] = $taxClass->taxRates->pluck('name')->toArray();
-            }
-
-            $newTotals      = [];
-            $orderTotal     = null;
-            foreach ($data['totals'] as $item) {
-                if ($item['code'] === 'order_total') {
-                    $orderTotal = $item;
-                } else {
-                    $newTotals[] = $item;
-                }
-            }
-
-            foreach ($data['carts']['carts'] as $product) {
-                if ($product['price'] > $product['cost_price']) {
-                    $amount += round(($product['price'] - $product['cost_price']) * $product['quantity']);
-                }
-
-                // Kiểm tra tax_class_id và thêm tên thuế vào mảng
-                $taxClassId = $product['tax_class_id'];
-                if (isset($taxClassMap[$taxClassId])) {
-                    $taxNames = array_merge($taxNames, $taxClassMap[$taxClassId]);
-                }
-            }
-
-            $taxNames = array_unique($taxNames);
-
-            if (! empty($taxNames)) {
-                $titleTax .= ' (' . implode(', ', $taxNames) . ')';
-            }
-
-            if ($amount > 0) {
-                $newTotals[] = [
-                    'code'          => 'tax_fee',
-                    'title'         => $titleTax,
-                    'amount'        => round($amount),
-                    'amount_format' => currency_format($amount),
-                ];
-            }
-            $newTotals[]    = $orderTotal;
-            $data['totals'] = $newTotals;
+            $data = $this->calculateTotals($data);
 
             return hook_filter('checkout.update.data', $data);
         } catch (\Exception $e) {
@@ -311,19 +38,23 @@ class CheckoutController extends Controller
         }
     }
 
-    /**
-     * 确认提交订单
-     *
-     * @return mixed
-     * @throws \Throwable
-     */
+    public function index()
+    {
+        try {
+            $data = (new CheckoutService)->checkoutData();
+            $data = hook_filter('checkout.index.data', $data);
+
+            $data = $this->calculateTotals($data);
+
+            return view('checkout', $data);
+        } catch (\Exception $e) {
+            return redirect(shop_route('carts.index'))->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
     public function confirm(Request $request)
     {
         $requestData = $request->all();
-
-        if (! $requestData['receive_time']) {
-            return json_fail('Vui lòng chọn thời gian nhận');
-        }
 
         try {
             $data = (new CheckoutService)->confirm($requestData['voucher_id'] ?? 0);
@@ -352,34 +83,189 @@ class CheckoutController extends Controller
 
     public function sendEmail($data)
     {
-        try {
+        if (env('MAIL_PORT')) {
+            try {
 
-            $detailCustomer = [
-                'tracking_number' => $data['number'],
-                'order_at'        => $data['created_at'],
-                'amount'          => $data['total_format'],
-                'customer_name'   => $data['customer_name'],
-                'isShop'          => true,
+                $detailCustomer = [
+                    'tracking_number' => $data['number'],
+                    'order_at'        => $data['created_at'],
+                    'amount'          => $data['total_format'],
+                    'customer_name'   => $data['customer_name'],
+                    'isShop'          => true,
+                ];
+
+                $detailShop = [
+                    'tracking_number' => $data['number'],
+                    'order_at'        => $data['created_at'],
+                    'amount'          => $data['total_format'],
+                    'customer_name'   => $data['customer_name'],
+                    'isShop'          => false,
+                ];
+
+                Mail::to($data['email'])->send(new SendNotifyOrder($detailCustomer));
+
+                $activeEmails = AdminUser::where('active', 1)->pluck('email');
+                foreach ($activeEmails as $email) {
+                    Mail::to($email)->send(new SendNotifyOrder($detailShop));
+                }
+
+                return true;
+            } catch (\Exception $e) {
+                return false;
+            }
+        }
+
+    }
+
+    public function calculateTotals($data)
+    {
+        $data = $this->applyPaymentFee($data);
+        $data = $this->applyVoucher($data);
+        $data = $this->applyTax($data);
+
+        return $data;
+    }
+
+    public function applyPaymentFee($data)
+    {
+        if ($data['current']['payment_method_code'] == 'vn_pay') {
+            $newTotals  = [];
+            $orderTotal = $this->extractOrderTotal($data['totals'], $newTotals);
+
+            $fee         = SettingRepo::getValuePluginColumns('vn_pay', 'percent_fee') ?? 0;
+            $amount      = round($orderTotal['amount'] * $fee / 100);
+            $newTotals[] = [
+                'code'          => 'paypay_fee',
+                'title'         => "Phí thanh toán qua PayPay($fee%)",
+                'amount'        => $amount,
+                'amount_format' => currency_format($amount),
             ];
 
-            $detailShop = [
-                'tracking_number' => $data['number'],
-                'order_at'        => $data['created_at'],
-                'amount'          => $data['total_format'],
-                'customer_name'   => $data['customer_name'],
-                'isShop'          => false,
+            $amountTotal = round($amount + $orderTotal['amount']);
+            $newTotals[] = [
+                'code'          => 'order_total',
+                'title'         => trans('shop/carts.order_total'),
+                'amount'        => $amountTotal,
+                'amount_format' => currency_format($amountTotal),
             ];
 
-            Mail::to($data['email'])->send(new SendNotifyOrder($detailCustomer));
+            $data['totals'] = $newTotals;
+        }
 
-            $activeEmails = AdminUser::where('active', 1)->pluck('email');
-            foreach ($activeEmails as $email) {
-                Mail::to($email)->send(new SendNotifyOrder($detailShop));
+        return $data;
+    }
+
+    public function applyVoucher($data)
+    {
+        if ($data['current']['voucher_id']) {
+            $voucher = (new VouchersRepo)->getByIdActive($data['current']['voucher_id']);
+            if (! $voucher) {
+                $data['current']['voucher_id'] = 0;
+            } else {
+                $newTotals  = [];
+                $orderTotal = $this->extractOrderTotal($data['totals'], $newTotals);
+
+                $amount      = $this->calculateVoucherAmount($voucher, $orderTotal);
+                $newTotals[] = [
+                    'code'          => 'voucher_id',
+                    'title'         => $voucher['name'],
+                    'amount'        => $amount,
+                    'amount_format' => '- ' . currency_format($amount),
+                ];
+
+                $amountTotal = max($orderTotal['amount'] - $amount, 0);
+                $newTotals[] = [
+                    'code'          => 'order_total',
+                    'title'         => trans('shop/carts.order_total'),
+                    'amount'        => round($amountTotal),
+                    'amount_format' => currency_format($amountTotal),
+                ];
+
+                $data['totals'] = $newTotals;
+            }
+        }
+
+        return $data;
+    }
+
+    public function applyTax($data)
+    {
+        $tax = Setting::query()
+            ->where('type', 'system')
+            ->where('space', 'base')
+            ->where('name', 'tax')
+            ->where('value', '1')
+            ->first();
+
+        if ($tax) {
+            $amount       = 0;
+            $titleTax     = 'Đã bao gồm các loại thuế';
+            $taxClasses   = TaxClass::with('taxRates')->get();
+            $taxClassMap  = $this->mapTaxClasses($taxClasses);
+            $newTotals    = [];
+            $orderTotal   = $this->extractOrderTotal($data['totals'], $newTotals);
+
+            foreach ($data['carts']['carts'] as $product) {
+                if ($product['price'] > $product['cost_price']) {
+                    $amount += round(($product['price'] - $product['cost_price']) * $product['quantity']);
+                }
+
+                if (isset($taxClassMap[$product['tax_class_id']])) {
+                    $taxNames = array_merge($taxNames ?? [], $taxClassMap[$product['tax_class_id']]);
+                }
             }
 
-            return true;
-        } catch (\Exception $e) {
-            return false;
+            if (! empty($taxNames)) {
+                $titleTax .= ' (' . implode(', ', array_unique($taxNames)) . ')';
+            }
+
+            if ($amount > 0) {
+                $newTotals[] = [
+                    'code'          => 'tax_fee',
+                    'title'         => $titleTax,
+                    'amount'        => round($amount),
+                    'amount_format' => currency_format($amount),
+                ];
+            }
+
+            $newTotals[]    = $orderTotal;
+            $data['totals'] = $newTotals;
         }
+
+        return $data;
+    }
+
+    public function extractOrderTotal($totals, &$newTotals)
+    {
+        $orderTotal = null;
+        foreach ($totals as $item) {
+            if ($item['code'] === 'order_total') {
+                $orderTotal = $item;
+            } else {
+                $newTotals[] = $item;
+            }
+        }
+
+        return $orderTotal;
+    }
+
+    public function calculateVoucherAmount($voucher, $orderTotal)
+    {
+        if ($voucher['discount_type'] == 'percentage') {
+            return round(floatval($voucher['discount_value']) / 100 * floatval($orderTotal['amount']));
+        }
+
+        return round($voucher['discount_value']);
+
+    }
+
+    public function mapTaxClasses($taxClasses)
+    {
+        $taxClassMap = [];
+        foreach ($taxClasses as $taxClass) {
+            $taxClassMap[$taxClass->id] = $taxClass->taxRates->pluck('name')->toArray();
+        }
+
+        return $taxClassMap;
     }
 }

@@ -1,13 +1,4 @@
 <?php
-/**
- * Render.php
- *
- * @copyright  2022 beikeshop.com - All Rights Reserved
- * @link       https://beikeshop.com
- * @author     Edward Yang <yangjin@guangda.work>
- * @created    2022-07-08 17:09:15
- * @modified   2022-07-08 17:09:15
- */
 
 namespace Plugin\Bestseller\Admin\View\DesignBuilders;
 
@@ -21,9 +12,7 @@ class Bestseller extends Component
      *
      * @return void
      */
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Get the view / contents that represent the component.

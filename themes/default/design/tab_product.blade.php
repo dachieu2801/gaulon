@@ -27,7 +27,7 @@
                 @for ($s = 0; $s < 8; $s++)
                 <div class="product-grid col-6 col-md-4 col-lg-3">
                   <div class="product-wrap">
-                    <div class="image"><a href="javascript:void(0)"><img src="{{ asset('catalog/placeholder.png') }}" class="img-fluid"></a></div>
+                    <div class="image"><a href="javascript:void(0)"><img src="{{ asset('catalog/placeholder.png') }}" class="img-fluid" lazy='load'></a></div>
                     <div class="product-name">Vui lòng cấu hình sản phẩm</div>
                     <div class="product-price">
                       <span class="price-new">66.66</span>
@@ -44,12 +44,11 @@
       @endif
     </div>
  <div class="text-center mt-3 mb-5">
+   @if($url)
    <a href="{{ $url}}" style="font-size: 1rem;">
- 
-
-     Xem tất cả > 
-   
+     Xem tất cả >
   </a>
+   @endif
 </div>
   </div>
 </section>

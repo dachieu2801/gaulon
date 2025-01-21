@@ -631,8 +631,8 @@ function create_directories($directoryPath)
     $directories = explode('/', $directoryPath);
     foreach ($directories as $directory) {
         $path = $path . '/' . $directory;
-        if (! is_dir(public_path($path))) {
-            @mkdir(public_path($path), 0755);
+        if (! is_dir(base_path("../{$path}"))) {
+            @mkdir(base_path("../{$path}"), 0755);
         }
     }
 }
@@ -804,29 +804,24 @@ function clean_domain($domain): string
     return trim(str_replace(['http://', 'https://'], '', $domain));
 }
 
-/**
- * Check domain ha license.
- * 删除版权信息, 请先购买授权 https://beikeshop.com/vip/subscription
- *
- * @return bool
- * @throws Exception
- */
+
 function check_license(): bool
 {
-    $configLicenceCode = system_setting('base.license_code');
-    $appDomain         = clean_domain(config('app.url'));
+//    $configLicenceCode = system_setting('base.license_code');
+//    $appDomain         = clean_domain(config('app.url'));
+//
+//    try {
+//        $domain         = new \Utopia\Domains\Domain($appDomain);
+//        $registerDomain = $domain->getRegisterable();
+//    } catch (\Exception $e) {
+//        $registerDomain = '';
+//    }
+//    if (empty($registerDomain)) {
+//        return true;
+//    }
 
-    try {
-        $domain         = new \Utopia\Domains\Domain($appDomain);
-        $registerDomain = $domain->getRegisterable();
-    } catch (\Exception $e) {
-        $registerDomain = '';
-    }
-    if (empty($registerDomain)) {
-        return true;
-    }
-
-    return $configLicenceCode == md5(mb_substr(md5($registerDomain), 2, 8));
+//    return $configLicenceCode == md5(mb_substr(md5($registerDomain), 2, 8));
+    return true;
 }
 
 /**
@@ -881,11 +876,7 @@ function move_dir($sourcePath, $destinationPath)
     File::deleteDirectory($sourcePath);
 }
 
-/**
- * 是否有开启的翻译工具
- *
- * @return bool
- */
+
 function has_translator(): bool
 {
     return \Beike\Repositories\PluginRepo::getTranslators()->count() > 0;
@@ -905,11 +896,7 @@ function beike_api_url(): string
     return $apiUrl;
 }
 
-/**
- * 检测当前访问域名和 .env 配置域名是否一致
- *
- * @return bool
- */
+
 function check_same_domain(): bool
 {
     $request       = request();

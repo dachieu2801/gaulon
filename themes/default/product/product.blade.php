@@ -112,7 +112,7 @@
             @if ((system_setting('base.show_price_after_login') and current_customer()) or !system_setting('base.show_price_after_login'))
               <div class=" rounded price-wrap d-flex align-items-end gap-4 bg-light flex-wrap py-4 px-2">
 
-                <div class=" text-decoration-line-through old-price" v-if="product.price != product.origin_price && product.origin_price !== 0">
+                <div class=" text-decoration-line-through old-price" v-if="+product.price < +product.origin_price">
                   @{{ product.origin_price_format }}
                 </div>
                 <div class="lh-1 me-2 new-price">@{{ product.price_format }}</div>
@@ -213,7 +213,8 @@
                         padding-left: 20px;
                         padding-right: 20px;
                     "
-                    ><i class="bi bi-cart-fill me-1"></i>{{ __('shop/products.add_to_cart') }}
+                    ><i class="bi bi-cart-fill me-1"></i>
+                    {{ __('shop/products.add_to_cart') }}
                     </button>
                     @endhookwrapper
                     @hookwrapper('product.detail.buy_now')
@@ -723,7 +724,7 @@
     }
     setTimeout(()=>{
       let element_all_star = document.getElementById(`all-star-1`);
-      element_all_star.classList.add('active')
+      // element_all_star.classList.add('active')
     },0)
 
 
@@ -735,7 +736,7 @@
       el: '#product-app',
 
       data: {
-        selectedVariantsIndex: [], // 选中的变量索引
+        selectedVariantsIndex: [], 
         images: [],
         product: {
           id: 0,

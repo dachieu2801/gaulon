@@ -8,8 +8,10 @@ use Beike\Admin\Http\Resources\ProductSimple;
 use Beike\Admin\Repositories\TaxClassRepo;
 use Beike\Admin\Services\ProductService;
 use Beike\Libraries\Weight;
+use Beike\Models\BestSeller;
 use Beike\Models\Product;
 use Beike\Models\ProductSku;
+use Beike\Models\Setting;
 use Beike\Models\TaxClass;
 use Beike\Repositories\CategoryRepo;
 use Beike\Repositories\FlattenCategoryRepo;
@@ -18,7 +20,6 @@ use Beike\Repositories\ProductRepo;
 use Beike\Repositories\ProductReviewsRepo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
@@ -100,6 +101,34 @@ class ProductController extends Controller
         return view('admin::pages.products.index', $data);
     }
 
+    public function bestSelling(Request $request)
+    {
+        $records = BestSeller::pluck('product_id')->jsonSerialize();
+
+        $products = Product::whereHas('masterSku')
+            ->whereIn('id', $records)
+            ->get();
+
+        $allRecords =  \Beike\Shop\Http\Resources\ProductSimple::collection($products)->jsonSerialize();
+
+        return view('admin::pages.bestSelling.index', ['allRecords' => $allRecords]);
+    }
+
+    public function updateBestSelling(Request $request)
+    {
+        $requestData = $request->all();
+
+        $product_id  = $requestData['id'] ?? [];
+        BestSeller::truncate();
+        $data = array_map(function ($productId) {
+            return ['product_id' => $productId];
+        }, $product_id);
+        BestSeller::insert($data);
+        //test
+
+        return json_success('Cập nhật thành công');
+    }
+
     public function trashed(Request $request)
     {
         $requestData            = $request->all();
@@ -133,36 +162,10 @@ class ProductController extends Controller
     {
         try {
             $requestData = $request->all();
-
-            $actionType  = $requestData['action_type'] ?? '';
-            $taxClassId  = $requestData['tax_class_id'];
-
-            if (round($taxClassId) <= 0) {
-                return redirect(admin_route('products.create'))
-                    ->withInput()
-                    ->withErrors(['error' => 'Cần chọn 1 loại thuế']);
-            }
-
-            $taxRates = TaxClass::find($taxClassId)->taxRates->jsonSerialize();
-
-            foreach ($requestData['skus'] as &$sku) {
-                $costPrice = (float) $sku['cost_price'];
-                $price     = $costPrice;
-
-                foreach ($taxRates as $rate) {
-                    if ($rate['type'] === 'percent') {
-                        $price += $costPrice * ($rate['rate'] / 100);
-                    } elseif ($rate['type'] === 'flat') {
-                        $price += (float) $rate['rate'];
-                    }
-                }
-
-                $sku['price'] = round($price); // Cập nhật giá mới vào SKU
-            }
-
-            $product     = (new ProductService)->create($requestData);
-
-            $data = [
+            $actionType  = $requestData['action_type']  ?? '';
+            $taxClassId  = $requestData['tax_class_id'] ?? 1;
+            $product     = $this->createOneProduct($requestData, $taxClassId);
+            $data        = [
                 'request_data' => $requestData,
                 'product'      => $product,
             ];
@@ -177,6 +180,30 @@ class ProductController extends Controller
         }
     }
 
+    public function createOneProduct($data, $taxClassId, $mul = false)
+    {
+        $taxRates = TaxClass::find($taxClassId)->taxRates->jsonSerialize();
+
+        foreach ($data['skus'] as &$sku) {
+            $costPrice = (float) $sku['cost_price'];
+            $price     = $costPrice;
+
+            foreach ($taxRates as $rate) {
+                if ($rate['type'] === 'percent') {
+                    $price += $costPrice * ($rate['rate'] / 100);
+                } elseif ($rate['type'] === 'flat') {
+                    $price += (float) $rate['rate'];
+                }
+            }
+
+            $sku['price'] = round($price);
+        }
+
+        $product     = (new ProductService)->create($data, $mul);
+
+        return $product;
+    }
+
     public function storeMultiple(Request $request)
     {
         $rules = [
@@ -184,43 +211,24 @@ class ProductController extends Controller
             'products.*.descriptions'                    => 'required|array',
             'products.*.descriptions.zh_cn'              => 'required|array',
             'products.*.descriptions.zh_cn.name'         => 'required|string',
-            'products.*.descriptions.en'                 => 'required|array',
-            'products.*.descriptions.en.name'            => 'required|string',
             'products.*.images'                          => 'nullable|array',
             'products.*.images.*'                        => 'nullable|string',
-            'products.*.video'                           => 'nullable|string',
             'products.*.position'                        => 'nullable|integer',
-            'products.*.weight'                          => 'nullable|numeric',
-            'products.*.weight_class'                    => 'nullable|string',
-            'products.*.brand_name'                      => 'nullable|string',
-            'products.*.brand_id'                        => 'nullable|string',
             'products.*.tax_class_id'                    => 'nullable|integer',
-            'products.*.shipping'                        => 'nullable',
             'products.*.categories'                      => 'nullable|array',
             'products.*.categories.*'                    => 'nullable|string',
             'products.*.active'                          => 'nullable',
             'products.*.variables'                       => 'nullable|array',
-            'products.*.variables.*.name'                => 'required|array',
-            'products.*.variables.*.name.zh_cn'          => 'required|string',
-            'products.*.variables.*.name.en'             => 'required|string',
-            'products.*.variables.*.values'              => 'nullable|array',
-            'products.*.variables.*.values.*.name'       => 'required|array',
-            'products.*.variables.*.values.*.name.zh_cn' => 'required|string',
-            'products.*.variables.*.values.*.name.en'    => 'required|string',
-            'products.*.variables.*.values.*.image'      => 'nullable|string',
-            'products.*.variables.*.isImage'             => 'required|boolean',
-            'products.*.skus'                            => 'required|array',
             'products.*.skus.*.images'                   => 'nullable|array',
             'products.*.skus.*.images.*'                 => 'nullable|string',
             'products.*.skus.*.is_default'               => 'nullable',
             'products.*.skus.*.variants'                 => 'nullable|array',
             'products.*.skus.*.variants.*'               => 'nullable|integer',
-            'products.*.skus.*.model'                    => 'required|string',
-            'products.*.skus.*.sku'                      => 'required|string',
-            'products.*.skus.*.price'                    => 'required|numeric',
+            'products.*.skus.*.model'                    => 'nullable|string',
+            // 'products.*.skus.*.sku'                      => 'required|string',
             'products.*.skus.*.origin_price'             => 'required|numeric',
             'products.*.skus.*.cost_price'               => 'required|numeric',
-            'products.*.skus.*.quantity'                 => 'required|integer',
+            'products.*.skus.*.quantity'                 => 'required|numeric',
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -233,7 +241,8 @@ class ProductController extends Controller
 
         foreach ($productsData as $index => $productData) {
             try {
-                $product             = (new ProductService)->create($productData, true);
+                $product = $this->createOneProduct($productData, $productData['tax_class_id'] ?? 1, true);
+
                 $processedProducts[] = $product;
             } catch (\Exception $e) {
                 $failedProducts[$index] = [
@@ -244,9 +253,6 @@ class ProductController extends Controller
             }
         }
 
-        //        return json_success(trans('common.deleted_success'));
-
-        // Trả về phản hồi JSON với thông báo thành công và thông tin về các sản phẩm không hợp lệ
         return response()->json([
             'message'            => 'Products processed',
             'processed_products' => $processedProducts,
@@ -385,10 +391,19 @@ class ProductController extends Controller
 
         $product    = hook_filter('admin.product.form.product', $product);
         $taxClasses = TaxClassRepo::getList();
-        //        array_unshift($taxClasses, ['title' => trans('admin/builder.text_no'), 'id' => 0]);
-
+        $showTax    = true;
+        $tax        = Setting::query()
+            ->where('type', 'system')
+            ->where('space', 'base')
+            ->where('name', 'tax')
+            ->where('value', '1')
+            ->first();
+        if (! $tax) {
+            $showTax = false;
+        }
         $data = [
             'product'               => $product,
+            'showTax'               => $showTax,
             'descriptions'          => $descriptions ?? [],
             'category_ids'          => $categoryIds  ?? [],
             'product_attributes'    => ProductAttributeResource::collection($product->attributes),

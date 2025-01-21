@@ -104,7 +104,7 @@ class Sidebar extends Component
                 'children' => $this->getReportSubRoutes(),
             ],
              [
-                 'route'    => 'theme.index',
+                 'route'    => 'design_menu.index',
                  'title'    => trans('admin/common.design'),
                  'icon'     => 'bi bi-palette',
                  'prefixes' => $this->getDesignSubPrefix(),
@@ -226,7 +226,7 @@ class Sidebar extends Component
      */
     private function getProductSubPrefix()
     {
-        $prefix = ['products', 'multi_filter', 'vouchers','categories', 'brands', 'attribute_groups', 'attributes'];
+        $prefix = ['products','best-selling','vouchers','categories'];
 
         return hook_filter('admin.sidebar.product.prefix', $prefix);
     }
@@ -276,7 +276,11 @@ class Sidebar extends Component
      */
     private function getDesignSubPrefix()
     {
-        $prefix = ['theme', 'design_menu', 'design_app_home'];
+        $prefix = [
+            'theme',
+            'design_menu',
+//            'design_app_home'
+        ];
 
         return hook_filter('admin.sidebar.design.prefix', $prefix);
     }
@@ -321,15 +325,16 @@ class Sidebar extends Component
     public function getProductSubRoutes()
     {
         $routes = [
-            ['route' => 'products.index', 'prefixes' => ['products'], 'excludes' => ['products.trashed']],
+            ['route' => 'products.index', 'prefixes' => ['products'], 'excludes' => ['products.trashed','products.bestSelling']],
 
             ['route' => 'categories.index', 'prefixes' => ['categories']],
+            ['route' => 'products.bestSelling', 'prefixes' => ['products'], 'excludes'=>['products.index', 'products.edit', 'products.create', 'products.reviews','products.trashed']],
             ['route' => 'vouchers.index', 'prefixes' => ['vouchers']],
-            ['route' => 'brands.index', 'prefixes' => ['brands']],
-            ['route' => 'attribute_groups.index', 'prefixes' => ['attribute_groups']],
-            ['route' => 'attributes.index', 'prefixes' => ['attributes']],
-            ['route' => 'multi_filter.index', 'prefixes' => ['multi_filter']],
-            ['route' => 'products.trashed', 'prefixes' => ['products'], 'excludes' => ['products.index', 'products.edit', 'products.create', 'products.reviews']],
+            // ['route' => 'brands.index', 'prefixes' => ['brands']],
+            // ['route' => 'attribute_groups.index', 'prefixes' => ['attribute_groups']],
+            // ['route' => 'attributes.index', 'prefixes' => ['attributes']],
+            // ['route' => 'multi_filter.index', 'prefixes' => ['multi_filter']],
+            ['route' => 'products.trashed', 'prefixes' => ['products'], 'excludes' => ['products.index', 'products.edit', 'products.create', 'products.reviews','products.bestSelling']],
         ];
 
         return hook_filter('admin.sidebar.product_routes', $routes);
@@ -358,7 +363,7 @@ class Sidebar extends Component
             ['route' => 'orders.index', 'prefixes' => ['orders'], 'excludes' => ['orders.trashed']],
             ['route' => 'rmas.index', 'prefixes' => ['rmas']],
             ['route' => 'rma_reasons.index', 'prefixes' => ['rma_reasons']],
-            ['route' => 'orders.trashed', 'prefixes' => ['orders'], 'excludes' => ['orders.index', 'orders.show']],
+            ['route' => 'orders.trashed', 'prefixes' => ['orders'], 'excludes' => ['orders.index', 'orders.show', 'orders.edit']],
         ];
 
         return hook_filter('admin.sidebar.order_routes', $routes);
@@ -399,11 +404,11 @@ class Sidebar extends Component
     public function getDesignSubRoutes()
     {
         $routes = [
-            ['route' => 'theme.index', 'prefixes' => ['theme'], 'hide_mobile' => true],
+            // ['route' => 'theme.index', 'prefixes' => ['theme'], 'hide_mobile' => true],
             ['route' => 'design_menu.index', 'prefixes' => ['design_menu'], 'hide_mobile' => 1],
             ['route' => 'design.index', 'prefixes' => ['design'], 'blank' => true, 'hide_mobile' => true],
             ['route' => 'design_footer.index', 'prefixes' => ['design_footer'], 'blank' => true, 'hide_mobile' => true],
-            ['route' => 'design_app_home.index', 'prefixes' => ['design_app_home'], 'blank' => false, 'hide_mobile' => true],
+//            ['route' => 'design_app_home.index', 'prefixes' => ['design_app_home'], 'blank' => false, 'hide_mobile' => true],
         ];
 
         return hook_filter('admin.sidebar.design_routes', $routes);
@@ -422,12 +427,12 @@ class Sidebar extends Component
 
         $routes[] = ['route' => 'plugins.index', 'prefixes' => ['plugins'], 'excludes' => $types->toArray()];
 
-        $originTypes = $types->push('plugins.index', 'plugins.edit')->push();
-        foreach (Plugin::TYPES as $type) {
-            $types    = $originTypes->reject("plugins.{$type}");
-            $routes[] = ['route' => "plugins.{$type}", 'prefixes' => ['plugins'], 'title' => trans("admin/plugin.{$type}"), 'excludes' => $types->toArray()];
-        }
 
+//        $originTypes = $types->push('plugins.index', 'plugins.edit')->push();
+//        foreach (Plugin::TYPES as $type) {
+//            $types    = $originTypes->reject("plugins.{$type}");
+//            $routes[] = ['route' => "plugins.{$type}", 'prefixes' => ['plugins'], 'title' => trans("admin/plugin.{$type}"), 'excludes' => $types->toArray()];
+//        }
 //        $routes[] = ['route' => 'marketing.index', 'prefixes' => ['marketing']];
 
         return hook_filter('admin.sidebar.plugins_routes', $routes);
