@@ -2,14 +2,16 @@
 
 namespace Beike\Shop\Http\Controllers;
 
+use Beike\Admin\Http\Resources\ProductSimple;
 use Beike\Models\CustomerWishlist;
 use Beike\Models\Product;
 use Beike\Repositories\CategoryRepo;
+use Beike\Repositories\ProductRepo;
 use Beike\Services\DesignService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-
+use Beike\Repositories\SettingRepo;
 class HomeController extends Controller
 {
     /**
@@ -20,6 +22,8 @@ class HomeController extends Controller
      */
     public function index(): View
     {
+        $statusProduct = SettingRepo::getPluginStatus('latest_products');
+
         $designSettings = system_setting('base.design_setting');
         $modules        = $designSettings['modules'] ?? [];
 
@@ -74,7 +78,7 @@ class HomeController extends Controller
         ];
         foreach ($categories as $a) {
             $cate['content']['images'][] = [
-                'image' => $a['image'] ? url($a['image']) : '' ,
+                'image' => $a['image'] ? url($a['image']) : '',
                 'link'  => [
                     'type'  => 'category',
                     'value' => $a['id'],
@@ -130,6 +134,111 @@ class HomeController extends Controller
 
         }
 
+//        lastest product
+        if($statusProduct){
+            $productList    = ProductRepo::getBuilder(['active' => 1, 'sort' => 'id'])->limit(8)->get();
+            $products       = ProductSimple::collection($productList)->jsonSerialize();
+            Log::info('adsasda',['ádsad'=> $products]);
+            $module = [
+                'code'      => 'tab_product',
+                'module_id' => Str::random(12),
+                'view_path' => 'design.tab_product',
+                'content'   => [
+                    'style' => [
+                        'background_color' => '',
+                    ],
+                    'editableTabsValue' => '0',
+                    'floor'             => [
+                        'zh_cn' => '',
+                    ],
+                    'title'       => '',
+                    'module_code' => 'tab_product',
+                    'tabs'        => [],
+                ],
+                'url'      => url('/categories/' . $a['id']),
+            ];
+//            foreach ($products as $a) {
+//                $module['content']['tabs'][] = [
+//                    'title'    => '',
+//                    'products' => [],
+//                ];
+//
+//                foreach ($a['products'] as $product) {
+//
+//                    if (! empty($product['skus'])) {
+//                        $countWishlist = CustomerWishlist::where('product_id', $product['id'])->count();
+//
+//                        $module['content']['tabs'][0]['products'][] = [
+//                            'id'                   => $product['id'],
+//                            'sku_id'               => $product['skus'][0]['id']           ?? null,
+//                            'name'                 => $product['descriptions'][0]['name'] ?? null,
+//                            'name_format'          => $product['descriptions'][0]['name'] ?? null,
+//                            'url'                  => url('/products/' . $product['id']),
+//                            'price'                => $product['skus'][0]['price'],
+//                            'origin_price'         => $product['skus'][0]['origin_price'],
+//                            'price_format'         => currency_format($product['skus'][0]['price']),
+//                            'origin_price_format'  => currency_format($product['skus'][0]['origin_price']),
+//                            'category_id'          => $a['id'],
+//                            'in_wishlist'          => $countWishlist ?? 0,
+//                            'discount'             => round((1 - floatval($product['skus'][0]['price']) / floatval($product['skus'][0]['origin_price'])) * 100),
+//                            'quantity_sold'        => $product['skus'][0]['quantity_sold'],
+//                            'quantity_sold_format' => $this->format_sold_quantity($product['skus'][0]['quantity_sold'] ?? 0),
+//                            'images'               => $product['images'],
+//                        ];
+//
+//                    }
+//                }
+//
+//                if (! empty($module['content']['tabs'][0]['products'])) {
+//
+//                    foreach ($a['children'] as $category) {
+//                        $tab = [
+//                            'title'    => $category['description']['name'],
+//                            'products' => [],
+//                        ];
+//                        $products = $category['products']->jsonSerialize();
+//
+//                        $maxProducts = 8;
+//                        $count       = 0;
+//                        foreach ($products as $product) {
+//                            if ($count >= $maxProducts) {
+//                                break;
+//                            }
+//                            if (! empty($product['skus'])) {
+//                                $countWishlist     = CustomerWishlist::where('product_id', $product['id'])->count();
+//                                $tab['products'][] = [
+//                                    'id'                   => $product['id'],
+//                                    'sku_id'               => $product['skus'][0]['id']           ?? null,
+//                                    'name'                 => $product['descriptions'][0]['name'] ?? null,
+//                                    'name_format'          => $product['descriptions'][0]['name'] ?? null,
+//                                    'url'                  => url('/products/' . $product['id']),
+//                                    'price'                => $product['skus'][0]['price'],
+//                                    'origin_price'         => $product['skus'][0]['origin_price'],
+//                                    'price_format'         => currency_format($product['skus'][0]['price']),
+//                                    'origin_price_format'  => currency_format($product['skus'][0]['origin_price']),
+//                                    'category_id'          => $a['id'],
+//                                    'in_wishlist'          => $countWishlist ?? 0,
+//                                    'discount'             => round((1 - floatval($product['skus'][0]['price']) / floatval($product['skus'][0]['origin_price'])) * 100),
+//                                    'quantity_sold'        => $product['skus'][0]['quantity_sold'],
+//                                    'quantity_sold_format' => $this->format_sold_quantity($product['skus'][0]['quantity_sold'] ?? 0),
+//                                    'images'               => $product['images'],
+//                                ];
+//                                $count++;
+//                            }
+//                        }
+//                        $module['content']['tabs'][] = $tab;
+//                    }
+//
+//                    $moduleItems[] = $module;
+//                }
+//
+//            }
+
+        }
+
+
+
+
         //cho sản phẩm theo danh mục
         foreach ($filteredCategories as $a) {
             $module = [
@@ -155,19 +264,19 @@ class HomeController extends Controller
                 'products' => [],
             ];
             $maxProducts = 8;
-            $count = 0;
+            $count       = 0;
 
             foreach ($a['products'] as $product) {
                 if ($count >= $maxProducts) {
                     break; // Dừng vòng lặp khi đã đạt số lượng tối đa
                 }
 
-                if (!empty($product['skus'])) {
+                if (! empty($product['skus'])) {
                     $countWishlist = CustomerWishlist::where('product_id', $product['id'])->count();
 
                     $module['content']['tabs'][0]['products'][] = [
                         'id'                   => $product['id'],
-                        'sku_id'               => $product['skus'][0]['id'] ?? null,
+                        'sku_id'               => $product['skus'][0]['id']           ?? null,
                         'name'                 => $product['descriptions'][0]['name'] ?? null,
                         'name_format'          => $product['descriptions'][0]['name'] ?? null,
                         'url'                  => url('/products/' . $product['id']),
